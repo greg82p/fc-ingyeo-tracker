@@ -1,0 +1,20 @@
+{
+ "consecutiveFailures": 0,
+ "club": {
+  "name": "FC INGYEO",
+  "div": 5,
+  "best": 4,
+  "gp": 71,
+  "w": 22,
+  "d": 14,
+  "l": 35,
+  "gf": 99,
+  "ga": 117,
+  "pts": 47,
+  "sr": 1373,
+  "cs": 28,
+  "team": 2055,
+  "updatedAt": "2026-10-08",
+  "source": "legacy"
+ }
+}

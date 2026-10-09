@@ -1,0 +1,33 @@
+name: pages
+
+# 사람이 docs/ 를 고쳐서 push 했을 때(페이지 코드 수정 등) 배포. 수집기의 봇 커밋은 collect.yml 안에서 직접 배포한다
+# (GITHUB_TOKEN 으로 만든 push 는 다른 워크플로를 트리거하지 않기 때문).
+on:
+  push:
+    branches: [main]
+    paths: ['docs/**']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs
+      - id: deployment
+        uses: actions/deploy-pages@v4

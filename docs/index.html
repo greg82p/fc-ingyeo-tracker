@@ -1,0 +1,958 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FC INGYEO 스탯 트래커</title>
+<link rel="icon" href="data:,">
+<style>
+:root{
+  color-scheme:light;
+  --bg:#f6f5f2; --surface:#fcfcfb; --surface-2:#f0efec; --border:#e2e0da;
+  --text:#0b0b0b; --text-2:#52514e; --muted:#7a7873;
+  --s1:#2a78d6; --s2:#eb6834; --s3:#1baf7a;
+  --good:#0ca30c; --bad:#d03b3b; --warn-bg:#fff4dc; --warn-ink:#7a5200;
+  --chip-w:#e3f3e3; --chip-l:#fbe4e4; --chip-d:#ecebe7; --sel:#eaf2fc;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#121211; --surface:#1a1a19; --surface-2:#242422; --border:#33332f;
+    --text:#ffffff; --text-2:#c3c2b7; --muted:#8f8d86;
+    --s1:#3987e5; --s2:#d95926; --s3:#199e70;
+    --chip-w:#173317; --chip-l:#3a1a1a; --chip-d:#2c2c29; --warn-bg:#3a2e12; --warn-ink:#f2cf7a; --sel:#1b2633;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#121211; --surface:#1a1a19; --surface-2:#242422; --border:#33332f;
+  --text:#ffffff; --text-2:#c3c2b7; --muted:#8f8d86;
+  --s1:#3987e5; --s2:#d95926; --s3:#199e70;
+  --chip-w:#173317; --chip-l:#3a1a1a; --chip-d:#2c2c29; --warn-bg:#3a2e12; --warn-ink:#f2cf7a; --sel:#1b2633;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:14px/1.5 -apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Pretendard","Noto Sans KR","Segoe UI",sans-serif;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1180px;margin:0 auto;padding:20px 16px 64px;min-width:0}
+header{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:10px 12px;margin-bottom:14px}
+h1{font-size:24px;margin:2px 0 6px;letter-spacing:-.01em}
+.sub{color:var(--text-2);font-size:13px}
+h2{font-size:16px;margin:0 0 4px}
+h3{font-size:14px;margin:0 0 8px;display:flex;align-items:center;gap:2px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:16px;min-width:0}
+.desc{color:var(--text-2);font-size:12.5px;margin:0 0 12px}
+.controls{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center}
+.toggle{display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--text-2);cursor:pointer;user-select:none}
+.seg{display:inline-flex;flex-wrap:wrap;border:1px solid var(--border);border-radius:8px;overflow:hidden}
+.seg button{border:0;background:transparent;color:var(--text-2);padding:6px 12px;font:inherit;font-size:13px;cursor:pointer}
+.seg button+button{border-left:1px solid var(--border)}
+.seg button[aria-pressed="true"]{background:var(--surface-2);color:var(--text);font-weight:600}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+.tile{background:var(--surface-2);border-radius:10px;padding:12px}
+.tile .k{font-size:12px;color:var(--text-2);display:flex;align-items:center}
+.tile .v{font-size:22px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+.tile .n{font-size:12px;color:var(--muted)}
+@media (max-width:600px){
+  .wrap{padding-top:14px}
+  header{margin-bottom:10px;gap:8px}
+  h1{font-size:21px;margin:0 0 6px}
+  .card{padding:14px;margin-bottom:12px}
+  .tiles{gap:8px}
+  .tile{padding:8px 10px}
+  .tile .k{font-size:11.5px}
+  .tile .v{font-size:17px}
+  .tile .n{font-size:11px}
+  .strip{gap:3px 14px}
+  #recent .formrow{padding:2px 0 0;background:none}
+  .desc{margin-bottom:8px}
+  .mnav small{white-space:normal}
+}
+.muted{color:var(--muted)}
+.tbl-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums;font-size:13px}
+th,td{padding:8px 10px;border-bottom:1px solid var(--border);text-align:right;white-space:nowrap}
+th{font-weight:600;color:var(--text-2);font-size:12px;background:var(--surface)}
+th.l,td.l{text-align:left}
+th.sort{cursor:pointer} th.sort:hover{color:var(--text)}
+th .arr{color:var(--muted);font-size:10px;margin-left:2px}
+tbody tr:hover>td{background:var(--surface-2)}
+.chip{display:inline-block;min-width:22px;text-align:center;border-radius:6px;padding:1px 6px;font-weight:700;font-size:12px;line-height:1.5}
+.chip.W{background:var(--chip-w);color:var(--good)} .chip.L{background:var(--chip-l);color:var(--bad)} .chip.D{background:var(--chip-d);color:var(--text-2)}
+.chip.dnf{background:var(--warn-bg);color:var(--warn-ink);font-size:11px;margin-left:4px;cursor:help}
+.tag{display:inline-block;border-radius:5px;padding:0 5px;font-size:11px;background:var(--warn-bg);color:var(--warn-ink);margin-left:4px;font-weight:600;white-space:nowrap}
+.tag.mute{background:var(--surface-2);color:var(--muted)}
+.agg-t td .tag.mute{display:block;width:max-content;margin:2px 0 0 auto}
+/* info icon + tooltip */
+.info{display:inline-flex;align-items:center;justify-content:center;width:15px;height:15px;border-radius:50%;border:1px solid var(--muted);color:var(--muted);font-size:10px;font-weight:700;font-style:normal;line-height:1;margin-left:4px;cursor:help;flex:none;vertical-align:1px}
+.info::before{content:"i"}
+.info:focus-visible,.chip.dnf:focus-visible{outline:2px solid var(--s1);outline-offset:1px}
+#tipbox{position:fixed;z-index:50;display:none;max-width:260px;padding:7px 9px;border-radius:7px;background:var(--text);color:var(--surface);font-size:12px;line-height:1.45;pointer-events:none;box-shadow:0 4px 14px rgba(0,0,0,.18)}
+/* header freshness */
+.fresh{display:inline-block;border:1px solid var(--border);background:var(--surface);border-radius:14px;padding:3px 10px;font-size:12.5px;color:var(--text-2);line-height:1.6}
+.fresh b{color:var(--text);font-weight:600}
+.fresh .dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--good);margin-right:6px;vertical-align:1px}
+.fresh.warn .dot{background:var(--bad)}
+.fresh.warn{border-color:var(--bad)}
+#boot{color:var(--muted);font-size:13px;padding:24px 0}
+.busy{opacity:.55;pointer-events:none;transition:opacity .15s}
+/* season strip */
+.strip{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 18px;font-variant-numeric:tabular-nums}
+.strip .lab{font-size:13px;font-weight:700;display:inline-flex;align-items:center}
+.strip .st{font-size:13px;color:var(--text-2);white-space:nowrap}
+.strip .st b{color:var(--text);font-size:15px;font-weight:700;margin-left:4px}
+/* generic responsive list rows */
+.list{border-top:1px solid var(--border)}
+.lrow{display:grid;align-items:center;column-gap:12px;padding:10px 8px;border-bottom:1px solid var(--border);font-variant-numeric:tabular-nums;font-size:13px;min-width:0}
+.lhead{font-size:12px;color:var(--text-2);font-weight:600;padding:8px}
+.lhead > span{display:inline-flex;align-items:center}
+.lhead .r{justify-content:flex-end}
+.meta{display:contents}
+.r{text-align:right}
+.mrow{cursor:pointer}
+.mrow:hover,.prow:hover{background:var(--surface-2)}
+.mrow:focus-visible,.prow:focus-visible{outline:2px solid var(--s1);outline-offset:-2px}
+.mrow.open{background:var(--sel)}
+.mrow.ex{opacity:.45}
+.c-car{color:var(--muted);font-size:12px}
+.mrow.open .c-car{color:var(--s1)}
+.c-opp b{font-weight:600}
+.scorers{display:block;font-size:12px;color:var(--text-2);margin-top:1px;white-space:normal}
+.c-score{font-weight:700;text-align:right}
+.mgrid{grid-template-columns:14px 100px minmax(0,1fr) 52px 76px 64px 112px 64px 84px}
+.dpanel{padding:16px;border-bottom:2px solid var(--border);display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.2fr);gap:20px;background:var(--surface)}
+.notice{background:var(--warn-bg);color:var(--warn-ink);border-radius:10px;padding:12px 14px;font-size:13px}
+.pgridrow{grid-template-columns:minmax(0,1fr) 44px 58px 52px 30px 30px 64px 14px}
+/* session list */
+.sgrid{grid-template-columns:14px 200px 44px 150px 96px minmax(0,1fr)}
+.igrid{grid-template-columns:14px 100px minmax(0,1fr) 52px 76px 150px}
+.irow{cursor:pointer}.irow:hover{background:var(--surface-2)}.irow:focus-visible{outline:2px solid var(--s1);outline-offset:-2px}
+@media (max-width:860px){.lhead.igrid{display:none}.irow.igrid{grid-template-columns:14px minmax(0,1fr) auto;grid-template-areas:"car date res" "car opp score" "car sess sess";row-gap:2px}.irow .c-car{grid-area:car}.irow .c-date{grid-area:date;font-size:12px;color:var(--text-2)}.irow .c-res{grid-area:res;justify-self:end}.irow .c-opp{grid-area:opp}.irow .c-score{grid-area:score;justify-self:end}.irow .muted{grid-area:sess;font-size:12px}}
+.srow{cursor:pointer}
+.srow:hover{background:var(--surface-2)}
+.srow:focus-visible{outline:2px solid var(--s1);outline-offset:-2px}
+.srow.on{background:var(--sel)}
+.srow.on .c-car{color:var(--s1)}
+.srow .c-date b{font-weight:600}
+.srow .c-date small{display:block;color:var(--text-2);font-size:12px}
+.form{display:flex;gap:3px;flex-wrap:wrap}
+.form .chip{min-width:18px;padding:0 4px;font-size:11px}
+.search{display:flex;gap:8px;align-items:center;margin:0 0 10px}
+.search input{flex:1;min-width:0;max-width:360px;border:1px solid var(--border);border-radius:8px;padding:7px 10px;font:inherit;font-size:13px;background:var(--surface);color:var(--text)}
+.search input:focus{outline:2px solid var(--s1);outline-offset:0;border-color:transparent}
+.snav{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.snav a,.snav span.dis{font-size:12.5px;text-decoration:none;color:var(--s1);border:1px solid var(--border);border-radius:999px;padding:3px 10px;background:var(--surface);white-space:nowrap}
+.snav span.dis{color:var(--muted);border-style:dashed}
+.snav a:hover{background:var(--surface-2)}
+.proto{display:inline-block;border-radius:5px;padding:0 6px;font-size:11px;background:var(--s1);color:#fff;font-weight:700;margin-left:6px;vertical-align:middle}
+.prow{cursor:pointer}
+.c-chev{color:var(--s1);font-weight:700;text-align:right}
+@media (max-width:860px){
+  .lhead.mgrid{display:none}
+  .mrow.mgrid{grid-template-columns:14px minmax(0,1fr) auto;grid-template-areas:"car date res" "car opp score" "car meta meta";row-gap:2px;padding:12px 8px}
+  .mrow .c-car{grid-area:car;align-self:start;padding-top:2px}
+  .mrow .c-date{grid-area:date;font-size:12px;color:var(--text-2)}
+  .mrow .c-res{grid-area:res;justify-self:end}
+  .mrow .c-opp{grid-area:opp}
+  .mrow .c-score{grid-area:score;justify-self:end;font-size:15px}
+  .mrow .meta{grid-area:meta;display:flex;flex-wrap:wrap;gap:2px 12px;font-size:12px;color:var(--text-2);margin-top:4px}
+  .mrow .meta > span{text-align:left}
+  .mrow .meta > span::before{content:attr(data-l) " ";color:var(--muted)}
+  .dpanel{grid-template-columns:minmax(0,1fr);padding:14px 10px}
+  .lhead.sgrid{display:none}
+  .srow.sgrid{grid-template-columns:14px minmax(0,1fr) auto auto;grid-template-areas:"car date rec rec" "car n gd gd" "car form form form";row-gap:3px;padding:12px 8px;column-gap:10px}
+  .srow .c-car{grid-area:car;align-self:start;padding-top:2px}
+  .srow .c-date{grid-area:date}
+  .srow .c-rec{grid-area:rec;justify-self:end}
+  .srow .c-form{grid-area:form;margin-top:2px}
+  .srow .c-n{grid-area:n;text-align:left;font-size:12px;color:var(--text-2)}
+  .srow .c-gd{grid-area:gd;justify-self:end;font-size:12px;color:var(--text-2)}
+  .srow .c-n::before{content:"경기 ";color:var(--muted)}
+  .srow .c-gd::before{content:"득실 ";color:var(--muted)}
+  .lhead.pgridrow{display:none}
+  .prow.pgridrow{grid-template-columns:minmax(0,1fr) 14px;grid-template-areas:"name chev" "meta chev";row-gap:2px}
+  .prow .c-name{grid-area:name}
+  .prow .c-chev{grid-area:chev}
+  .prow .meta{grid-area:meta;display:flex;flex-wrap:wrap;gap:2px 10px;font-size:12px;color:var(--text-2)}
+  .prow .meta > span{text-align:left}
+  .prow .meta > span::before{content:attr(data-l) " ";color:var(--muted)}
+}
+/* two-sided compare */
+.cmpbox .teams{display:flex;justify-content:space-between;font-size:13px;font-weight:600;gap:8px}
+.cmpbox .teams span:first-child{color:var(--s1)} .cmpbox .teams span:last-child{color:var(--s2);text-align:right}
+.srline{display:flex;justify-content:space-between;font-size:12px;color:var(--text-2);margin:2px 0 8px;font-variant-numeric:tabular-nums}
+.cmprow{margin:10px 0}
+.cmprow .lab{display:flex;justify-content:space-between;align-items:center;font-size:12.5px;color:var(--text-2);font-variant-numeric:tabular-nums}
+.cmprow .lab b{color:var(--text);font-weight:600}
+.cmprow .lab .mid{display:inline-flex;align-items:center;color:var(--text-2)}
+.cmprow .bars{display:flex;gap:2px;height:8px;margin-top:4px}
+.cmprow .bars span{display:block;height:100%}
+.cmprow .bars .us{background:var(--s1);border-radius:4px 0 0 4px}
+.cmprow .bars .them{background:var(--s2);border-radius:0 4px 4px 0}
+.cmprow .bars .none{background:var(--surface-2);border-radius:4px;flex:1}
+/* player view */
+a.back{display:inline-flex;align-items:center;gap:6px;color:var(--s1);text-decoration:none;font-size:13px;font-weight:600;margin-bottom:12px}
+.pchips{display:flex;flex-wrap:wrap;gap:6px}
+.phead{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px 16px;margin:4px 0 8px}
+.phead h2{font-size:20px;margin:0}
+.pstrip{padding-top:8px;border-top:1px solid var(--border)}
+.pchip{display:inline-flex;align-items:center;gap:4px;border:1px solid var(--border);border-radius:999px;padding:3px 11px;font-size:13px;color:var(--text-2);text-decoration:none;background:var(--surface)}
+.pchip:hover{background:var(--surface-2)}
+.pchip.on{background:var(--s1);border-color:var(--s1);color:#fff;font-weight:600}
+.pchip.dim{opacity:.6}
+.mnav{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}
+.mnav a,.mnav span{display:block;border:1px solid var(--border);border-radius:10px;padding:9px 12px;text-decoration:none;color:var(--text);background:var(--surface);font-size:13px;min-width:0}
+.mnav a:hover{background:var(--surface-2)}
+.mnav .nx{text-align:right}
+.mnav small{display:block;color:var(--text-2);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mnav span{color:var(--muted);background:transparent;border-style:dashed}
+.pbar{display:flex;justify-content:flex-end;margin:-4px 0 10px}
+.pgrid{columns:3 300px;column-gap:16px}
+.pgrid > section{break-inside:avoid;display:block;width:100%}
+.kv{width:100%}
+.kv td{padding:7px 4px}
+.kv td:first-child{text-align:left;color:var(--text-2)}
+.kv td:first-child > span.lbl{display:inline-flex;align-items:center}
+.kv tr:last-child td{border-bottom:0}
+.kv tr.dimrow td{color:var(--muted)}
+.bar-in{display:flex;align-items:center;gap:8px;justify-content:flex-end}
+.minibar{width:56px;height:6px;background:var(--surface-2);border-radius:3px;overflow:hidden;flex:none}
+.minibar span{display:block;height:100%;background:var(--s1);border-radius:3px}
+.donut{display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin:4px 0 12px}
+.donut svg{width:132px;height:132px;flex:none}
+.donut svg path{stroke:var(--surface);stroke-width:2;transition:opacity .1s}
+.donut svg path:hover{opacity:.85}
+.donut .lg{display:grid;gap:6px;font-size:13px;min-width:150px}
+.donut .lg div{display:flex;align-items:center;gap:8px}
+.donut .lg i{width:10px;height:10px;border-radius:3px;flex:none}
+.donut .lg b{margin-left:auto;font-variant-numeric:tabular-nums;font-weight:600}
+.donut .lg span.pc{color:var(--text-2);font-variant-numeric:tabular-nums;width:42px;text-align:right}
+.tabs{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;justify-content:space-between;margin-bottom:10px}
+details.card > summary{cursor:pointer;list-style:none;display:flex;align-items:center;gap:8px}
+details.card > summary::-webkit-details-marker{display:none}
+details.card > summary::before{content:"▸";color:var(--muted);font-size:12px}
+details.card[open] > summary::before{content:"▾"}
+details.card > summary h2{margin:0}
+ul.notes{margin:12px 0 0;padding-left:18px;color:var(--text-2);font-size:13px}
+ul.notes li{margin:4px 0}
+ul.notes b{color:var(--text)}
+code{font-size:12px;background:var(--surface-2);padding:1px 4px;border-radius:4px}
+footer{color:var(--muted);font-size:12px;margin-top:8px}
+.foot-note{color:var(--muted);font-size:12px;margin-top:8px}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <div class="sub" id="meta"></div>
+      <h1 id="title"></h1>
+      <span class="fresh" id="fresh"></span>
+    </div>
+    <div class="controls" id="homeCtl">
+      <label class="toggle"><input type="checkbox" id="exDnf"> 이탈(DNF) 경기 제외</label>
+    </div>
+  </header>
+
+  <!-- ===== HOME VIEW ===== -->
+  <div id="boot">데이터를 불러오는 중…</div>
+  <main id="home" hidden>
+    <section class="card"><div class="strip" id="season"></div></section>
+
+    <section class="card">
+      <div class="tabs" style="margin-bottom:4px">
+        <div><h2 id="recentH">최근 세션 요약</h2><p class="desc" id="recentDesc" style="margin:0"></p></div>
+        <div class="snav" id="snav"></div>
+      </div>
+      <div class="tiles" id="recent" style="margin-top:10px"></div>
+    </section>
+
+    <section class="card">
+      <h2 id="matchesH">경기 이력</h2>
+      <p class="desc">경기를 누르면 스탯·출전 선수가 펼쳐지고, 선수를 누르면 세부 지표로 이동합니다.</p>
+      <div class="list" id="matches"></div>
+    </section>
+
+    <section class="card agg" id="aggS">
+      <div class="tabs">
+        <div><h2 class="agg-h">세션 선수 집계</h2><p class="desc agg-d" style="margin:0"></p></div>
+        <div class="controls"><div class="seg agg-g"></div><div class="seg agg-m"><button data-m="tot" aria-pressed="true">합계</button><button data-m="p90" aria-pressed="false">90분당</button></div></div>
+      </div>
+      <div class="tbl-wrap"><table class="agg-t"></table></div>
+    </section>
+
+    <section class="card">
+      <h2>세션 목록</h2>
+      <p class="desc" id="sessDesc">한 세션 = 60분 안에 이어진 경기 묶음(보통 저녁 한 번). 세션을 누르면 위 요약·경기 이력이 그 세션으로 바뀝니다.</p>
+      <div class="search"><input id="q" type="search" placeholder="상대팀 이름으로 경기 검색" aria-label="상대팀 이름으로 경기 검색"><span class="muted" id="qInfo"></span></div>
+      <div class="list" id="sessions"></div>
+    </section>
+
+    <section class="card agg" id="aggA">
+      <div class="tabs">
+        <div><h2 class="agg-h">선수별 스탯 집계 · 수집 누적</h2><p class="desc agg-d" style="margin:0"></p></div>
+        <div class="controls">
+          <div class="seg agg-p"><button data-p="all" aria-pressed="true">수집 누적</button><button data-p="last5" aria-pressed="false">최근 5세션</button></div>
+          <div class="seg agg-g"></div>
+          <div class="seg agg-m"><button data-m="tot" aria-pressed="true">합계</button><button data-m="p90" aria-pressed="false">90분당</button></div>
+        </div>
+      </div>
+      <div class="tbl-wrap"><table class="agg-t"></table></div>
+    </section>
+
+    <details class="card" id="notesBox">
+      <summary><h2>지표 정의와 제약사항</h2><span class="muted" id="notesCount"></span></summary>
+      <ul class="notes" id="notes"></ul>
+    </details>
+  </main>
+
+  <!-- ===== PLAYER DETAIL VIEW ===== -->
+  <main id="pview" hidden></main>
+
+  <footer id="foot"></footer>
+</div>
+<div id="tipbox" role="tooltip"></div>
+
+<script>
+/* ---------- 데이터 로딩: docs/data/ (build.py 산출물) ---------- */
+const DATA_BASE = 'data/';
+const MIN_APP_SEC = 600;
+const RES = {1:'W',2:'L',4:'D'};
+const RK = {W:'승',D:'무',L:'패'};
+const POS = {forward:'FW',midfielder:'MF',defender:'DF',goalkeeper:'GK',f:'FW',m:'MF',d:'DF',g:'GK'};
+const TYPE_TAG = {playoff:'플레이오프', friendly:'친선'};
+const kst = ts => new Date(ts*1000).toLocaleString('ko-KR',{timeZone:'Asia/Seoul',month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit',hour12:false});
+const _kp = (ts,opt) => Object.fromEntries(new Intl.DateTimeFormat('ko-KR',{timeZone:'Asia/Seoul',...opt}).formatToParts(new Date(ts*1000)).map(p=>[p.type,p.value]));
+const kd  = ts => { const p=_kp(ts,{month:'numeric',day:'numeric',weekday:'short'}); return `${p.month}/${p.day} (${p.weekday})`; };   // 10/7 (수)
+const kmd = ts => { const p=_kp(ts,{month:'numeric',day:'numeric'}); return `${p.month}/${p.day}`; };                                  // 10/8
+const kt = ts => new Date(ts*1000).toLocaleString('ko-KR',{timeZone:'Asia/Seoul',hour:'2-digit',minute:'2-digit',hour12:false});
+const isoToTs = s => s ? Math.floor(Date.parse(s)/1000) : null;
+
+let META, EV, C, sessions = [], PLAYERS_PRE = null, INDEX = null;
+const sessCache = new Map();          // sid → [match]
+const matchSid = new Map();           // matchId → sid (로드된 세션 + 인덱스)
+
+async function getJson(path, bust){
+  const r = await fetch(DATA_BASE + path + '?v=' + encodeURIComponent(bust), {cache:'no-store'});
+  if(!r.ok) throw new Error(`${path} → HTTP ${r.status}`);
+  return r.json();
+}
+
+// 세션 파일의 경기 객체 → 페이지 내부 포맷 (초기 수집본의 미기록 이벤트는 null)
+function hydrateMatch(m){
+  const missing = new Set((m.evMissing||[]).map(String));
+  m.players = m.players.map(p => {
+    const o = {...p, pos: POS[p.pos] || p.pos};
+    EV.forEach(e => { o['e'+e] = missing.has(String(e)) ? null : (p.ev && p.ev[String(e)]) || 0; });
+    delete o.ev;
+    o.played = o.sec >= MIN_APP_SEC;
+    o.pc  = Math.max(0, o.pm - o.e153);    // 성공 패스: EA 집계값 − 오프사이드 패스(event_153)
+    o.fwd = Math.max(0, o.e30 - o.e153);   // 전진 성공: 오프사이드는 항상 전진 패스
+    return o;
+  });
+  m.dnfNote = (m.dnfFlag===1 ? '상대 이탈로 승리 처리된 경기' : m.zeroEvt ? '경기 직후 이탈 — 사람 선수 전원 10분 미만, 이벤트 거의 0건' : !(m.code in RES) ? '비정상 결과 코드' : '')
+            + (m.code in RES ? '' : ` · 결과 코드 ${m.code}`);
+  m.scorers = m.players.filter(p=>p.g>0).sort((a,b)=>b.g-a.g).map(p=>({name:p.name,g:p.g}));
+  m.other = Math.max(0, m.gf - m.scorers.reduce((s,x)=>s+x.g,0));
+  m.oppGP = m.oppSR ? m.oppSR.gp : null; m.oppSR = m.oppSR ? m.oppSR.sr : null;
+  matchSid.set(m.id, m.sid);
+  return m;
+}
+async function ensureSession(sid){
+  if(sessCache.has(sid)) return sessCache.get(sid);
+  const d = await getJson(`sessions/${sid}.json`, META.dataHash);
+  const ms = d.matches.map(hydrateMatch);
+  sessCache.set(sid, ms);
+  const s = sessById(sid); if(s) s.ms = ms;
+  return ms;
+}
+async function ensureIndex(){
+  if(INDEX) return INDEX;
+  const rows = await getJson('matches.json', META.dataHash);
+  INDEX = rows.map(([id,ts,type,opp,oppId,gf,ga,res,dnf,sid]) => ({id,ts,type,opp,oppId,gf,ga,res,dnf:!!dnf,sid}));
+  INDEX.forEach(r => matchSid.set(r.id, r.sid));
+  return INDEX;
+}
+async function sidOfMatch(mid){
+  if(matchSid.has(mid)) return matchSid.get(mid);
+  await ensureIndex();
+  return matchSid.get(mid) || null;
+}
+
+async function loadCore(){
+  META = await getJson('meta.json', Date.now());
+  EV = META.evFull; C = META.club || {};
+  const [sl, pl] = await Promise.all([getJson('sessions.json', META.dataHash), getJson('players.json', META.dataHash)]);
+  const now = Date.now()/1000;
+  sessions = sl.map(s => ({...s, ms: null, live: now - s.end < 7200,
+    label: kd(s.start) + (kmd(s.start)!==kmd(s.end) ? ' ~ '+kmd(s.end) : ''), range: `${kst(s.start)} ~ ${kt(s.end)}`}));
+  PLAYERS_PRE = pl;
+  if(sessions.length) await ensureSession(sessions[0].id);
+}
+const sessById = id => sessions.find(s=>s.id===id);
+const sessOfMatch = mid => { const sid = matchSid.get(mid); return sid && sessById(sid); };
+const FIRST_SEEN = () => kmd(META.range.first);
+const RANGE = () => `${kmd(META.range.first)}~${kmd(META.range.last)}`;
+
+/* ---------- helpers ---------- */
+const $ = s => document.querySelector(s);
+const fmt = (v,d=0) => (v==null||!isFinite(v)) ? '–' : Number(v).toLocaleString('ko-KR',{minimumFractionDigits:d,maximumFractionDigits:d});
+const pct = (a,b) => b ? a/b*100 : null;
+const esc = s => String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const info = t => `<span class="info" tabindex="0" role="button" aria-label="${esc(t)}" data-tip="${esc(t)}"></span>`;
+const sgn = v => (v>0?'+':v<0?'−':'±') + Math.abs(v);
+const typeTag = m => TYPE_TAG[m.type] ? `<span class="tag mute" data-tip="${m.type==='playoff'?'플레이오프 매치':'친선 매치'} (리그 경기가 아님)">${TYPE_TAG[m.type]}</span>` : '';
+let state = {exDnf:false, open:null, showZero:false, sid:null, q:''};
+const curSess = () => sessById(state.sid) || sessions[0];
+const curMatches = () => (curSess() && curSess().ms) || [];
+const noDnf = ms => ms.filter(m => !(state.exDnf && m.dnf));
+const scope = () => noDnf(curMatches());                                  // 세션 요약·경기 이력 범위
+const isLatest = () => state.sid === sessions[0].id;
+const tile = ([k,v,n]) => `<div class="tile"><div class="k">${k}</div><div class="v">${v}</div><div class="n">${n||'&nbsp;'}</div></div>`;
+const posShare = m => { const t=m.us.pc+m.them.pc; if(!t) return [null,null]; const u=Math.round(m.us.pc/t*100); return [u, 100-u]; }; // 반올림 후 합이 항상 100%
+const scorerText = m => {
+  const parts = m.scorers.map(s=>`<span style="white-space:nowrap">${esc(s.name)} ${s.g}</span>`);
+  if(m.other) parts.push(`<span style="white-space:nowrap">기타 ${m.other}${info('사람 선수 기록에 없는 득점 — AI 동료 득점 또는 자책골로 추정')}</span>`);
+  return parts.length ? `득점 ${parts.join(' · ')}` : '';
+};
+
+/* ---------- tooltip (hover / focus / tap) ---------- */
+const tipbox = $('#tipbox'); let tipEl = null;
+function showTip(el){
+  tipbox.textContent = el.dataset.tip; tipbox.style.display='block';
+  const r=el.getBoundingClientRect(), tw=tipbox.offsetWidth, th=tipbox.offsetHeight;
+  let x=r.left+r.width/2-tw/2; x=Math.max(8,Math.min(x,innerWidth-tw-8));
+  let y=r.top-th-8; if(y<8) y=r.bottom+8;
+  tipbox.style.left=x+'px'; tipbox.style.top=y+'px'; tipEl=el;
+}
+function hideTip(){ tipbox.style.display='none'; tipEl=null; }
+document.addEventListener('mouseover',e=>{const t=e.target.closest('[data-tip]'); if(t) showTip(t);});
+document.addEventListener('mouseout',e=>{const t=e.target.closest('[data-tip]'); if(t && !t.contains(e.relatedTarget)) hideTip();});
+document.addEventListener('focusin',e=>{const t=e.target.closest('[data-tip]'); if(t) showTip(t);});
+document.addEventListener('focusout',e=>{if(e.target.closest('[data-tip]')) hideTip();});
+document.addEventListener('click',e=>{const t=e.target.closest('[data-tip]'); if(t){ e.stopPropagation(); e.preventDefault(); showTip(t);} else hideTip();}, true);
+document.addEventListener('keydown',e=>{ if(e.key==='Escape') hideTip(); });
+window.addEventListener('scroll',hideTip,{passive:true});
+
+/* ---------- header, freshness, season strip ---------- */
+// 마지막 수집 시각은 저장소에 쓰지 않는다(변경 없는 실행은 커밋 없음). 대신 GitHub Actions 실행 기록(공개 API, 비인증 60회/시)에서 읽는다.
+let RUNS = null;
+const repoFromLocation = () => {
+  const q = new URLSearchParams(location.search).get('repo'); if(q && q.includes('/')){ const [owner, repo] = q.split('/'); return {owner, repo}; }   // 로컬 미리보기용: ?repo=owner/name
+  const h = location.hostname.match(/^([^.]+)\.github\.io$/i); const seg = location.pathname.split('/').filter(Boolean)[0]; return (h && seg) ? {owner:h[1], repo:seg} : null; };
+async function loadRuns(){
+  const r = repoFromLocation(); if(!r) return null;
+  try{
+    const res = await fetch(`https://api.github.com/repos/${r.owner}/${r.repo}/actions/workflows/collect.yml/runs?per_page=10&status=completed`, {headers:{accept:'application/vnd.github+json'}});
+    if(!res.ok) return null;
+    const runs = ((await res.json()).workflow_runs || []);
+    const ok = runs.find(x=>x.conclusion==='success'); let fails = 0; for(const x of runs){ if(x.conclusion==='success') break; fails++; }
+    return {lastSuccessAt: ok ? ok.updated_at : null, lastRunAt: runs[0] ? runs[0].updated_at : null, fails, url: `https://github.com/${r.owner}/${r.repo}/actions/workflows/collect.yml`, nRuns: runs.length};
+  }catch(e){ return null; }
+}
+function renderHeader(){
+  $('#title').textContent = (C.name || 'FC INGYEO') + ' · 스탯 트래커';
+  $('#meta').textContent = `clubId ${META.clubId} · 리그 · 플레이오프 · 친선`;
+  const gapN = (META.gaps||[]).reduce((s,g)=>s+(g.missedLeagueMatches||0),0);
+  const tipBase = `GitHub Actions가 KST 21~03시는 30분, 그 외 3시간 간격으로 수집합니다. 새 경기가 있을 때만 저장소가 바뀝니다. 지표 v${META.metricsVersion} · 데이터 ${META.dataHash}.` + (gapN?` 수집 누락 ${gapN}경기 기록됨.`:'');
+  let body, cls = 'fresh';
+  if(RUNS && RUNS.nRuns){
+    const last = isoToTs(RUNS.lastSuccessAt), stale = !last || (Date.now()/1000 - last) > 86400;
+    if(stale || RUNS.fails>=3) cls += ' warn';
+    body = `마지막 수집 <b>${last ? kst(last) : '성공 기록 없음'}</b> · ${META.counts.matches}경기 · ${META.counts.sessions}세션 (${RANGE()})`
+      + (stale ? ` <span class="tag">24시간 이상 성공 없음</span>` : '') + (RUNS.fails ? ` <span class="tag">최근 ${RUNS.fails}회 실패</span>` : '')
+      + info(tipBase + ` 수집 시각은 GitHub Actions 실행 기록 기준(${RUNS.url}).`);
+  }else if(RUNS===null && repoFromLocation()){
+    body = `마지막 수집 <b>확인 불가</b> · ${META.counts.matches}경기 · ${META.counts.sessions}세션 (${RANGE()})` + info(tipBase + ' GitHub API 응답이 없어(요청 한도 초과 또는 네트워크) 수집 시각을 표시하지 못했습니다. 데이터 자체는 정상입니다.');
+  }else{
+    body = `마지막 경기 <b>${kst(META.range.last)}</b> · ${META.counts.matches}경기 · ${META.counts.sessions}세션 (${RANGE()})` + info(tipBase + ' GitHub Pages 밖(로컬 미리보기 등)에서는 수집 시각을 표시하지 않습니다.');
+  }
+  if(META.consecutiveFailures>=3) { cls += ' warn'; body += ` <span class="tag">수집기 연속 실패 ${META.consecutiveFailures}회</span>`; }
+  $('#fresh').className = cls; $('#fresh').innerHTML = `<span class="dot"></span>` + body;
+  $('#foot').textContent = `데이터: proclubs.ea.com/api/fc (비공식) · 마지막 경기 ${kst(META.range.last)} (KST) · 데이터 ${META.dataHash}`;
+  const gp = C.gp || 0;
+  $('#season').innerHTML = [
+    `<span class="lab">시즌 누적${info('EA 서버가 집계한 현 시즌 리그 전체 값(overallStats·leaderboard). 아래 수집 데이터(' + RANGE() + ' 경기)와 범위가 다릅니다.')}</span>`,
+    `<span class="st">디비전<b>${C.div!=null?'D'+C.div:'–'}</b> ${C.best!=null?`<span class="muted">(최고 D${C.best})</span>`:''}</span>`,
+    `<span class="st">전적<b>${C.w??'–'}승 ${C.d??'–'}무 ${C.l??'–'}패</b> <span class="muted">${gp}경기 · 승률 ${fmt(gp?C.w/gp*100:null)}%</span></span>`,
+    `<span class="st">득실<b>${C.gf??'–'} : ${C.ga??'–'}</b> <span class="muted">(${sgn((C.gf||0)-(C.ga||0))})</span></span>`,
+    `<span class="st">승점<b>${C.pts??'–'}</b></span>`,
+    `<span class="st">클린시트<b>${C.cs??'–'}</b></span>`,
+    `<span class="st">스킬 레이팅<b>${C.sr??'–'}</b></span>`,
+  ].join('');
+}
+
+/* ---------- recent summary ---------- */
+function renderRecent(){
+  const S = curSess(); const ms = scope(); const n = ms.length || 1;
+  const w=ms.filter(m=>m.res==='W').length, d=ms.filter(m=>m.res==='D').length, l=ms.filter(m=>m.res==='L').length;
+  const gf=ms.reduce((s,m)=>s+m.gf,0), ga=ms.reduce((s,m)=>s+m.ga,0);
+  const cs=ms.filter(m=>m.ga===0).length;
+  const shU=ms.reduce((s,m)=>s+m.us.sh,0), shT=ms.reduce((s,m)=>s+m.them.sh,0);
+  const dnfN = S.dnfN;
+  const i = sessions.findIndex(s=>s.id===S.id), newer = sessions[i-1], older = sessions[i+1];
+  $('#recentH').innerHTML = (isLatest() ? '최근 세션 요약' : `세션 요약 · ${S.label}`) + (S.live ? `<span class="tag" style="vertical-align:middle" data-tip="수집 시점 기준 마지막 경기가 2시간 이내라 이 세션에 경기가 더 추가될 수 있습니다">진행 중</span>` : '');
+  $('#recentDesc').textContent = ms.length ? `${S.range} (KST) · ${ms.length}경기` + (dnfN ? (state.exDnf?` · 이탈 ${dnfN}건 제외`:` · 이탈 ${dnfN}건 포함`) : '') : '대상 경기 없음';
+  $('#snav').innerHTML = (older ? `<a href="#/s/${older.id}">← 이전 세션 <span class="muted">${older.label}</span></a>` : `<span class="dis">← 이전 세션 없음</span>`)
+                       + (newer ? `<a href="#/s/${newer.id}">다음 세션 <span class="muted">${newer.label}</span> →</a>` : (isLatest()?'':`<a href="#/">최근 세션으로 →</a>`));
+  $('#matchesH').textContent = `경기 이력 · ${S.label}`;
+  const form = ms.map(m=>`<span class="chip ${m.res}" title="${esc(m.opp)}">${RK[m.res]}</span>`).join(' ');
+  $('#recent').innerHTML = [
+    ['전적', `${w}승 ${d}무 ${l}패`, `승률 ${fmt(w/n*100)}%`],
+    ['득점 : 실점', `${gf} : ${ga}`, `경기당 ${fmt(gf/n,1)} : ${fmt(ga/n,1)}`],
+    ['클린시트', cs, '실점 0 경기'],
+    [`평균 슈팅 수${info('경기당 · 우리 : 상대 · 사람 선수 합계 기준')}`, `${fmt(shU/n,1)} : ${fmt(shT/n,1)}`, '우리 : 상대'],
+  ].map(tile).join('')
+   + `<div class="tile formrow" style="grid-column:1/-1"><div class="k">최근 흐름 (최신 → 과거)</div><div style="margin-top:6px;display:flex;gap:4px;flex-wrap:wrap">${form}</div></div>`;
+}
+
+/* ---------- match list + expandable detail ---------- */
+function cmpRow(label, a, b, opt={}){
+  const nul = a==null || b==null;
+  const {fmtA=nul?'–':String(a), fmtB=nul?'–':String(b), tip=''} = opt;
+  const tot = nul ? 0 : a + b;
+  const bars = tot>0 ? `<span class="us" style="flex:${a}"></span><span class="them" style="flex:${b}"></span>` : `<span class="none"></span>`;
+  return `<div class="cmprow"><div class="lab"><b>${fmtA}</b><span class="mid">${label}${tip?info(tip):''}</span><b>${fmtB}</b></div><div class="bars">${bars}</div></div>`;
+}
+function matchDetail(m){
+  if(m.zeroEvt){
+    const who = m.players.map(p=>`${esc(p.name)} ${p.sec<60?'1분 미만':fmt(p.sec/60,1)+'분'}`).join(' · ');
+    return `<div class="dpanel" style="grid-template-columns:minmax(0,1fr)"><div class="notice"><b>이탈 경기라 기록이 거의 없습니다.</b> 사람 선수 전원이 10분 미만 뛰어 슈팅·패스 등 이벤트가 사실상 0건입니다.<br><span style="font-size:12px">출전: ${who}</span></div></div>`;
+  }
+  const u=m.us, t=m.them; const [pu,pt] = posShare(m);
+  const cmp = `<div class="cmpbox">
+    <h3>경기 스탯${info('양 팀 모두 사람 선수 합계 기준입니다. AI 동료·AI 골키퍼 기록은 API에 없습니다.')}</h3>
+    <div class="teams"><span>${esc(C.name)}</span><span>${esc(m.opp)}</span></div>
+    <div class="srline"><span>SR ${C.sr}</span><span>SR ${m.oppSR??'–'}${m.oppGP!=null&&m.oppGP<10?` · 시즌 ${m.oppGP}경기`:''}</span></div>
+    ${cmpRow('패스 점유율', pu||0, pt||0, {fmtA:fmt(pu)+'%', fmtB:fmt(pt)+'%', tip:'우리 성공 패스 ÷ 양 팀 성공 패스 합(오프사이드 패스 제외). 사람 선수 패스만 집계되므로 실제 볼 점유율과 다릅니다.'})}
+    ${cmpRow('슈팅', u.sh, t.sh)}
+    ${cmpRow('경고', u.yc, t.yc)}
+    ${cmpRow('퇴장', u.red, t.red)}
+    ${cmpRow('태클 성공(시도)', u.tm, t.tm, {fmtA:`${u.tm}(${u.ta})`, fmtB:`${t.tm}(${t.ta})`})}
+    ${cmpRow('패스 성공(시도)', u.pc, t.pc, {fmtA:`${u.pc}(${u.pa})`, fmtB:`${t.pc}(${t.pa})`, tip: m.legacy ? '초기 수집본이라 팀 오프사이드 패스 수가 없어 EA 집계값 그대로입니다(오프사이드 패스 포함).' : '오프사이드에 걸린 패스는 실패로 처리합니다.'})}
+    <div class="foot-note">사람 선수 출전: 우리 ${m.nPlayed}명 · 상대 ${m.oppN}명${m.dnf?` · <span class="chip dnf" tabindex="0" data-tip="${esc(m.dnfNote)}">DNF</span>`:''}${m.legacy?` · <span class="tag mute" tabindex="0" data-tip="9/29~10/3 초기 수집본: 이벤트 ${m.evN}종만 기록(현재 ${EV.length}종). 경고·크로스·태클 유형 등은 '–'로 표시됩니다.">초기 수집본</span>`:''}</div>
+  </div>`;
+  const rows = m.players.slice().sort((a,b)=>b.sec-a.sec).map(p=>`
+    <div class="lrow pgridrow prow" role="link" tabindex="0" data-m="${m.id}" data-p="${esc(p.id)}" aria-label="${esc(p.name)} 세부 지표">
+      <span class="c-name"><b>${esc(p.name)}</b>${p.mom?' <span class="muted" title="MOM">★</span>':''}${p.played?'':'<span class="tag">10분 미만</span>'}</span>
+      <span class="meta">
+        <span data-l="포지션">${p.pos}</span><span class="r" data-l="출전">${p.played?fmt(p.sec/60):fmt(p.sec/60,1)}분</span><span class="r" data-l="평점">${fmt(p.rt,1)}</span>
+        <span class="r" data-l="골">${p.g}</span><span class="r" data-l="도움">${p.a}</span><span class="r" data-l="세컨 어시스트">${fmt(p.e115)}</span>
+      </span>
+      <span class="c-chev">›</span>
+    </div>`).join('');
+  const list = `<div><h3>출전 선수</h3><div class="list">
+    <div class="lrow lhead pgridrow"><span>선수</span><span>포지션</span><span class="r">출전</span><span class="r">평점</span><span class="r">골</span><span class="r">도움</span><span class="r">세컨 어시</span><span></span></div>
+    ${rows}</div></div>`;
+  return `<div class="dpanel" id="panel-${m.id}">${cmp}${list}</div>`;
+}
+const matchHead = () => `<div class="lrow lhead mgrid" role="row">
+    <span></span><span>일시(KST)</span><span>상대 · 득점자</span><span class="r">스코어</span><span>결과</span>
+    <span class="r">인원${info('10분 이상 뛴 사람 선수 수 · 우리 : 상대')}</span>
+    <span class="r">상대 SR${info(`상대 클럽의 스킬 레이팅. 상대를 처음 만난 수집 시점 값이며 괄호 = 상대 − 우리(${C.sr}). 10/4 이전 경기는 조회하지 않아 비어 있습니다.`)}</span>
+    <span class="r">슈팅${info('사람 선수 합계 · 우리 : 상대')}</span>
+    <span class="r">패스 점유율${info('우리 성공 패스 ÷ 양 팀 성공 패스 합(오프사이드 패스 제외). 실제 볼 점유율이 아닙니다.')}</span></div>`;
+function matchRow(m, {open=false, expandable=true}={}){
+  const ex = state.exDnf && m.dnf;
+  const [pu,pt] = posShare(m);
+  const sc = scorerText(m);
+  const sr = m.oppSR==null ? '–' : `${m.oppSR} <span class="muted">(${sgn(m.oppSR-C.sr)})</span>${m.oppGP!=null&&m.oppGP<10?`<span class="tag mute" tabindex="0" data-tip="상대가 이번 시즌 ${m.oppGP}경기만 치러 레이팅 신뢰도가 낮습니다">${m.oppGP}경기</span>`:''}`;
+  return `<div class="lrow mgrid mrow ${ex?'ex':''} ${open?'open':''}" role="${expandable?'button':'link'}" tabindex="0" ${expandable?`aria-expanded="${open}"`:''} data-id="${m.id}" data-x="${expandable?1:0}">
+      <span class="c-car">${expandable?(open?'▾':'▸'):'›'}</span>
+      <span class="c-date">${kst(m.ts)}</span>
+      <span class="c-opp"><b>${esc(m.opp)}</b>${typeTag(m)}${sc?`<span class="scorers">${sc}</span>`:''}</span>
+      <span class="c-score">${m.gf} : ${m.ga}</span>
+      <span class="c-res"><span class="chip ${m.res}">${RK[m.res]}</span>${m.dnf?`<span class="chip dnf" tabindex="0" data-tip="${esc(m.dnfNote)}">DNF</span>`:''}</span>
+      <span class="meta">
+        <span class="r" data-l="인원">${m.nPlayed} : ${m.oppN}</span>
+        <span class="r" data-l="상대 SR">${sr}</span>
+        <span class="r" data-l="슈팅">${m.us.sh} : ${m.them.sh}</span>
+        <span class="r" data-l="패스 점유율">${pu==null?'–':`${fmt(pu)}% : ${fmt(pt)}%`}</span>
+      </span>
+    </div>` + (open ? matchDetail(m) : '');
+}
+function bindMatchRows(root){
+  root.querySelectorAll('.mrow').forEach(el=>{
+    const act = el.dataset.x==='1'
+      ? ()=>{ state.open = state.open===el.dataset.id ? null : el.dataset.id; history.replaceState(null,'',state.open?`#/m/${state.open}`:(isLatest()?'#/':`#/s/${state.sid}`)); renderMatches(); }
+      : ()=>{ location.hash = `#/m/${el.dataset.id}`; };
+    el.onclick=act; el.onkeydown=e=>{if(e.target!==el) return; if(e.key==='Enter'||e.key===' '){e.preventDefault();act();}};
+  });
+  root.querySelectorAll('.prow').forEach(el=>{
+    const go=()=>{ location.hash = `#/m/${el.dataset.m}/p/${encodeURIComponent(el.dataset.p)}`; };
+    el.onclick=go; el.onkeydown=e=>{if(e.target!==el) return; if(e.key==='Enter'){e.preventDefault();go();}};
+  });
+}
+function renderMatches(){
+  const ms = curMatches();
+  $('#matches').innerHTML = matchHead() + ms.map(m=>matchRow(m,{open:state.open===m.id})).join('');
+  bindMatchRows($('#matches'));
+}
+
+/* ---------- session list + opponent search ---------- */
+function renderSessions(){
+  const q = state.q.trim().toLowerCase();
+  if(q){
+    if(!INDEX){ $('#qInfo').textContent = '경기 목록 불러오는 중…'; ensureIndex().then(renderSessions); return; }
+    const hits = INDEX.filter(r=>r.opp.toLowerCase().includes(q));
+    const ids = new Set(hits.map(r=>r.oppId));
+    $('#qInfo').textContent = `${hits.length}경기 · 클럽 ${ids.size}개 일치 · 누르면 해당 세션으로 이동`;
+    const head = `<div class="lrow lhead igrid" role="row"><span></span><span>일시(KST)</span><span>상대</span><span class="r">스코어</span><span>결과</span><span>세션</span></div>`;
+    $('#sessions').innerHTML = hits.length ? head + hits.map(r=>{ const s=sessById(r.sid); return `<div class="lrow igrid irow" role="link" tabindex="0" data-id="${r.id}">
+        <span class="c-car">›</span><span class="c-date">${kst(r.ts)}</span>
+        <span class="c-opp"><b>${esc(r.opp)}</b>${typeTag(r)}</span>
+        <span class="c-score">${r.gf} : ${r.ga}</span>
+        <span class="c-res"><span class="chip ${r.res}">${RK[r.res]}</span>${r.dnf?'<span class="chip dnf">DNF</span>':''}</span>
+        <span class="muted">${s?s.label:''}</span></div>`; }).join('')
+      : `<div class="lrow" style="display:block;color:var(--muted)">"${esc(state.q)}" 와 일치하는 상대팀이 없습니다.</div>`;
+    $('#sessions').querySelectorAll('.irow').forEach(el=>{ const go=()=>{ location.hash = `#/m/${el.dataset.id}`; }; el.onclick=go; el.onkeydown=e=>{if(e.target!==el) return; if(e.key==='Enter'||e.key===' '){e.preventDefault();go();}}; });
+    return;
+  }
+  $('#qInfo').textContent = '';
+  const head = `<div class="lrow lhead sgrid" role="row"><span></span><span>세션(KST)</span><span class="r">경기</span><span>전적</span><span class="r">득실</span><span>흐름 (최신 → 과거)</span></div>`;
+  const rows = sessions.map(s=>{
+    const on = s.id===state.sid;
+    const form = (s.ms ? s.ms.map(m=>`<span class="chip ${m.res}" title="${esc(m.opp)} ${m.gf}:${m.ga}">${RK[m.res]}</span>`) : s.form.map(r=>`<span class="chip ${r}">${RK[r]}</span>`)).join('');
+    const ttag = (s.types.playoff?`<span class="tag mute">플레이오프 ${s.types.playoff}</span>`:'') + (s.types.friendly?`<span class="tag mute">친선 ${s.types.friendly}</span>`:'');
+    return `<div class="lrow sgrid srow ${on?'on':''}" role="link" tabindex="0" data-sid="${s.id}" ${on?'aria-current="true"':''}>
+      <span class="c-car">${on?'●':'○'}</span>
+      <span class="c-date"><b>${s.label}</b>${s.live?`<span class="tag" tabindex="0" data-tip="수집 시점 기준 마지막 경기가 2시간 이내 — 경기가 더 추가될 수 있음">진행 중</span>`:''}${s.legacy?`<span class="tag mute" tabindex="0" data-tip="초기 수집본: 이벤트 36종만 기록(현재 61종). 일부 세부 지표가 '–'로 표시됩니다.">초기</span>`:''}${ttag}<small>${kt(s.start)} ~ ${kt(s.end)}</small></span>
+      <span class="c-n r">${s.n}</span>
+      <span class="c-rec"><b>${s.w}승 ${s.d}무 ${s.l}패</b>${s.dnfN?`<span class="muted" style="font-size:12px"> · DNF ${s.dnfN}</span>`:''}</span>
+      <span class="c-gd r">${s.gf} : ${s.ga} <span class="muted">(${sgn(s.gf-s.ga)})</span></span>
+      <span class="c-form form">${form}</span>
+    </div>`;
+  }).join('');
+  $('#sessions').innerHTML = head + rows;
+  $('#sessions').querySelectorAll('.srow').forEach(el=>{
+    const go=()=>{ location.hash = el.dataset.sid===sessions[0].id ? '#/' : `#/s/${el.dataset.sid}`; };
+    el.onclick=go; el.onkeydown=e=>{if(e.target!==el) return; if(e.key==='Enter'||e.key===' '){e.preventDefault();go();}};
+  });
+}
+$('#q').oninput = e => { state.q = e.target.value; renderSessions(); };
+
+/* ---------- player detail view ---------- */
+let hiddenN = 0;
+const show = hide => state.showZero || !hide;
+function rateCell(s,a){const r=pct(s,a);return `<div class="bar-in">${r==null?'–':fmt(r)+'%'}<div class="minibar"><span style="width:${r==null?0:Math.min(100,r)}%"></span></div></div>`;}
+const add = (...xs) => xs.some(x=>x==null) ? null : xs.reduce((a,b)=>a+b,0);   // 미기록(null)이 섞이면 합도 null
+function splitTable(title, tip, rows, p, chart='', unkTip='', baseS=null){
+  const anyNull = rows.some(r=>r[1]==null||r[2]==null);
+  const sumS = rows.reduce((x,r)=>x+(r[1]??0),0), sumA = anyNull ? null : rows.reduce((x,r)=>x+r[1]+r[2],0);
+  const uS = Math.max(0, (baseS ?? p.pm) - sumS), uA = sumA==null ? null : Math.max(0, p.pa - sumA);
+  const tr = rows.map(([k,s,f])=>{ const t=add(s,f); return `<tr><td>${k}</td><td>${fmt(s)}</td><td>${fmt(t)}</td><td>${rateCell(s,t)}</td></tr>`; }).join('');
+  const unkHide = uS===0 && (uA===0||uA==null); if(unkHide && !state.showZero) hiddenN++;
+  const unk = show(unkHide) ? `<tr class="dimrow"><td><span class="lbl">분류 불명${info(unkTip)}</span></td><td>${uS}</td><td>${fmt(uA)}</td><td></td></tr>` : '';
+  return `<section class="card"><h3>${title}${info(tip)}</h3>${chart}<table class="kv"><thead><tr><th class="l">구분</th><th>성공</th><th>시도</th><th>성공률</th></tr></thead><tbody>${tr}${unk}</tbody></table></section>`;
+}
+// row: [label, value, tip, hideWhenZero]
+function kvCard(title, rows, tip='', emptyMsg='표시할 항목 없음'){
+  // 값이 null(미기록)이면 0과 같이 취급해 기본 숨김
+  const vis = rows.filter(r=>{ const h=!!r[3] || r[1]==null; if(h && !state.showZero){ hiddenN++; return false; } return true; });
+  const body = vis.length ? vis.map(([k,v,t])=>`<tr><td><span class="lbl">${k}${t?info(t):''}</span></td><td><b>${v==null?'–':v}</b></td></tr>`).join('')
+                          : `<tr><td class="muted" colspan="2">${emptyMsg}</td></tr>`;
+  return `<section class="card"><h3>${title}${tip?info(tip):''}</h3><table class="kv"><tbody>${body}</tbody></table></section>`;
+}
+function donut(items){
+  const tot = items.reduce((s,x)=>s+x.v,0);
+  if(!tot) return `<div class="donut"><div class="muted">성공 패스 방향 데이터 없음</div></div>`;
+  const R=60, r=36, cx=66, cy=66; let a0=-Math.PI/2; let paths='';
+  const pt=(rad,a)=>[cx+rad*Math.cos(a), cy+rad*Math.sin(a)];
+  items.forEach(x=>{
+    if(!x.v) return;
+    const frac=x.v/tot, a1=a0+frac*2*Math.PI;
+    let d;
+    if(frac>=0.9999){ d=`M${cx} ${cy-R} A${R} ${R} 0 1 1 ${cx-0.01} ${cy-R} L${cx-0.01} ${cy-r} A${r} ${r} 0 1 0 ${cx} ${cy-r} Z`; }
+    else{
+      const large=frac>0.5?1:0, [x0,y0]=pt(R,a0),[x1,y1]=pt(R,a1),[x2,y2]=pt(r,a1),[x3,y3]=pt(r,a0);
+      d=`M${x0} ${y0} A${R} ${R} 0 ${large} 1 ${x1} ${y1} L${x2} ${y2} A${r} ${r} 0 ${large} 0 ${x3} ${y3} Z`;
+    }
+    paths+=`<path d="${d}" fill="${x.c}"><title>${x.k} ${x.v}회 (${fmt(frac*100)}%)</title></path>`;
+    a0=a1;
+  });
+  const center=`<text x="${cx}" y="${cy-2}" text-anchor="middle" font-size="18" font-weight="700" fill="var(--text)">${tot}</text><text x="${cx}" y="${cy+15}" text-anchor="middle" font-size="11" fill="var(--text-2)">성공 패스</text>`;
+  const lg=items.map(x=>`<div><i style="background:${x.c}"></i>${x.k}<b>${x.v}</b><span class="pc">${fmt(x.v/tot*100)}%</span></div>`).join('');
+  return `<div class="donut"><svg viewBox="0 0 132 132" role="img" aria-label="성공 패스 방향 비율">${paths}${center}</svg><div class="lg">${lg}</div></div>`;
+}
+function zoneCard(p){
+  const z = [['수비 지역',p.e108,p.e105],['중앙 지역',p.e109,p.e106],['공격 지역',p.e110,p.e107]];
+  const mx = Math.max(1,...z.flatMap(r=>[r[1],r[2]]));
+  const bar=(v,c)=>`<div class="bar-in">${v}<div class="minibar"><span style="width:${v/mx*100}%;background:${c}"></span></div></div>`;
+  const rows = z.map(([k,w,l])=>`<tr><td>${k}</td><td>${bar(w,'var(--s1)')}</td><td>${bar(l,'var(--s2)')}</td><td>${sgn(w-l)}</td></tr>`).join('');
+  const tw=p.e108+p.e109+p.e110, tl=p.e105+p.e106+p.e107;
+  return `<section class="card"><h3>볼 탈취 · 상실 위치${info('탈취 event_108~110 · 상실 event_105~107. 구역은 우리 팀 기준(수비 지역 = 우리 골문 쪽).')}</h3>
+    <table class="kv"><thead><tr><th class="l">구역</th><th>탈취</th><th>상실</th><th>차</th></tr></thead><tbody>${rows}
+    <tr><td><b>합계</b></td><td><b>${tw}</b></td><td><b>${tl}</b></td><td><b>${sgn(tw-tl)}</b></td></tr></tbody></table></section>`;
+}
+function shotCard(p){
+  const r=[['박스 안',p.e13,p.e14],['박스 밖',p.e18,p.e19]];
+  const all=add(p.e13,p.e18,p.e14,p.e19); const unk= all==null ? null : Math.max(0,p.sh-all);
+  const rows=r.map(([k,on,off])=>{ const t=add(on,off); return `<tr><td>${k}</td><td>${fmt(on)}</td><td>${fmt(off)}</td><td>${fmt(t)}</td><td>${rateCell(on,t)}</td></tr>`; }).join('');
+  return `<section class="card"><h3>슈팅 위치 · 정확도${info('유효 = event_13(박스 안)·18(박스 밖), 빗나감 = event_14·19. 정확도 = 유효 ÷ 슈팅. 막힌 슈팅이 유효에 섞일 수 있습니다(README).')}</h3>
+    <table class="kv"><thead><tr><th class="l">위치</th><th>유효</th><th>빗나감</th><th>합계</th><th>정확도</th></tr></thead><tbody>${rows}
+    ${unk?`<tr class="dimrow"><td>분류 불명</td><td></td><td></td><td>${unk}</td><td></td></tr>`:''}
+    <tr><td><b>전체</b></td><td><b>${p.e217}</b></td><td><b>${p.e218}</b></td><td><b>${p.sh}</b></td><td>${rateCell(p.e217,p.sh)}</td></tr></tbody></table></section>`;
+}
+function playerNav(m, p){
+  const chips = m.players.slice().sort((a,b)=>b.sec-a.sec).map(q=>
+    `<a class="pchip ${q.id===p.id?'on':''} ${q.played?'':'dim'}" href="#/m/${m.id}/p/${encodeURIComponent(q.id)}" ${q.id===p.id?'aria-current="page"':''}>${esc(q.name)}</a>`).join('');
+  // 이전/다음은 같은 세션 안에서만. 세션 경계에서는 이웃 세션으로 안내 (세션 파일은 그때 로드)
+  const S = sessOfMatch(m.id); const si = sessions.findIndex(s=>s.id===S.id); const older = sessions[si+1], newer = sessions[si-1];
+  const seq = curMatches().filter(x=>x.players.some(q=>q.id===p.id)).slice().sort((a,b)=>a.ts-b.ts);
+  const i = seq.findIndex(x=>x.id===m.id), prev = seq[i-1], next = seq[i+1];
+  const lab = x => `${kst(x.ts)} · ${esc(x.opp)} · ${RK[x.res]} ${x.gf}:${x.ga}${x.dnf?' · DNF':''}`;
+  const pv = prev ? `<a class="pv" href="#/m/${prev.id}/p/${encodeURIComponent(p.id)}">← 이전 경기<small>${lab(prev)}</small></a>`
+                  : older ? `<a class="pv" href="#/s/${older.id}">← 이전 세션<small>${older.label} · ${older.n}경기</small></a>` : `<span>← 이전 경기<small>수집된 첫 세션</small></span>`;
+  const nx = next ? `<a class="nx" href="#/m/${next.id}/p/${encodeURIComponent(p.id)}">다음 경기 →<small>${lab(next)}</small></a>`
+                  : newer ? `<a class="nx" href="#/s/${newer.id}">다음 세션 →<small>${newer.label} · ${newer.n}경기</small></a>` : `<span class="nx">다음 경기 →<small>가장 최근 세션</small></span>`;
+  return {chips, nav:`<nav class="mnav" aria-label="같은 선수의 다른 경기">${pv}${nx}</nav>`};
+}
+function renderPlayer(mid, pid){
+  const m = curMatches().find(x=>x.id===mid); const p = m && m.players.find(x=>x.id===pid);
+  const v = $('#pview');
+  if(!p){ v.innerHTML = `<a class="back" href="#/">← 목록으로</a><section class="card">선수 또는 경기를 찾을 수 없습니다.</section>`; return; }
+  hiddenN = 0;
+  const ratio = (x,base) => x==null ? null : base ? `${x} <span class="muted">(${fmt(x/base*100)}%)</span>` : `${x}`;
+  const so = (s,a) => (s==null||a==null) ? null : `${s}<span class="muted">(${a})</span>`;
+  const {chips, nav} = playerNav(m, p);
+  const header = `
+    <a class="back" href="#/m/${m.id}">← 경기 이력으로 <span class="muted">(${esc(sessOfMatch(m.id)?.label||'')} 세션)</span></a>
+    <section class="card">
+      <div class="sub">${kst(m.ts)} (KST) · vs ${esc(m.opp)}${typeTag(m)}${m.oppSR!=null?` <span class="muted">(SR ${m.oppSR})</span>`:''} · <span class="chip ${m.res}">${RK[m.res]}</span> <b>${m.gf} : ${m.ga}</b>${m.dnf?`<span class="chip dnf" tabindex="0" data-tip="${esc(m.dnfNote)}">DNF</span>`:''}</div>
+      <div class="phead">
+        <h2>${esc(p.name)}${p.mom?' <span class="muted" style="font-size:13px;font-weight:600">★ MOM</span>':''}</h2>
+        <div class="pchips" aria-label="같은 경기 선수">${chips}</div>
+      </div>
+      <div class="strip pstrip">${[
+        ['포지션', p.pos, ''],
+        ['출전', (p.played?fmt(p.sec/60):fmt(p.sec/60,1))+'분', p.played?'':'10분 미만'],
+        ['평점', fmt(p.rt,1), ''],
+        ['골', p.g, ''],
+        ['도움', p.a, ''],
+        ['세컨 어시스트', p.e115, ''],
+      ].map(([k,v,n])=>`<span class="st">${k}<b>${v}</b>${n?` <span class="muted">(${n})</span>`:''}</span>`).join('')}</div>
+    </section>
+    ${nav}`;
+  if(m.zeroEvt){
+    v.innerHTML = header + `<section class="card"><div class="notice"><b>이탈 경기라 세부 기록이 없습니다.</b> 사람 선수 전원이 10분 미만 뛰어 이벤트가 사실상 0건입니다. 위의 이전/다음 경기로 이동해 보세요.</div></section>`;
+    return;
+  }
+  const crossN = add(p.e36, p.e37);
+  const legacyNote = m.legacy ? `<section class="card" style="grid-column:1/-1"><div class="notice"><b>초기 수집본(9/29~10/3)입니다.</b> 이벤트 ${m.evN}종만 기록돼 패스 실패의 방향·거리, 크로스, 빗나간 슈팅 위치, 태클 유형, 파울·경고는 없습니다. 해당 항목은 '–'로 표시하거나 숨겼습니다.</div></section>` : '';
+  const cards = legacyNote + `
+      ${kvCard('패스', [
+        ['패스 성공(시도)', so(p.pc,p.pa), '성공 = EA 집계 패스 − 오프사이드 패스(event_153). 오프사이드에 걸린 패스는 실패로 처리합니다.'], ['패스 성공률', fmt(pct(p.pc,p.pa))+'%'],
+        ['오프사이드 패스', p.e153, 'event_153 · 받는 선수가 오프사이드에 걸린 패스. 위 성공 수에서 빠지고 실패로 계산됩니다.'],
+        ['크로스 성공(시도)', so(p.e36,crossN), '성공 event_36(세트피스 포함) · 실패 event_37(오픈플레이만)', crossN===0],
+        ['크로스 성공률', crossN==null?null:fmt(pct(p.e36,crossN))+'%', '', crossN===0],
+        ['원터치 패스(비율)', ratio(p.e143,p.pc), 'event_143 · 비율은 성공 패스(오프사이드 제외) 대비'],
+      ])}
+      ${splitTable('패스 방향', '전진 event_30·31 · 횡 34·35 · 후진 32·33 (성공·실패). 오프사이드 패스(event_153)는 항상 전진 패스라 전진 성공에서 빼고 실패로 셉니다. 원형 그래프는 방향이 분류된 성공 패스 기준입니다.',
+        [['전진',p.fwd,p.e31==null?null:p.e31+(p.e30-p.fwd)],['횡',p.e34,p.e35],['후진',p.e32,p.e33]], p,
+        donut([{k:'전진',v:p.fwd,c:'var(--s1)'},{k:'횡',v:p.e34,c:'var(--s2)'},{k:'후진',v:p.e32,c:'var(--s3)'}]),
+        '방향 이벤트 합과 총 패스 수의 차이 (성공은 오프사이드 제외 기준, 시도는 EA 집계값 기준)', p.pc)}
+      ${splitTable('패스 거리', '단거리 event_24·25 · 중거리 26·27 · 장거리 28·29 (성공·실패). 거리별 성공에는 오프사이드 패스가 섞여 있을 수 있습니다(어느 거리였는지는 알 수 없음).',
+        [['단거리',p.e24,p.e25],['중거리',p.e26,p.e27],['장거리',p.e28,p.e29]], p, '',
+        '거리 이벤트 합과 EA 총 패스 수(오프사이드 포함)의 차이. 크로스(event_36·37)는 따로 집계되어 여기에 포함됩니다.')}
+      ${kvCard('찬스 메이킹', [
+        ['도움', p.a], ['세컨 어시스트', p.e115, 'event_115', p.e115===0],
+        ['스루패스 성공', p.e152, 'event_152'], ['코너킥 시도', p.e145, 'event_145', p.e145===0],
+      ])}
+      ${shotCard(p)}
+      ${kvCard('공격', [
+        ['유효 슈팅(슈팅 시도)', so(p.e217,p.sh), '유효 슈팅 event_217 · 괄호는 전체 슈팅 수'], ['골', p.g], ['도움', p.a],
+        ['드리블 돌파', p.e112, 'event_112 · 상대를 제친 횟수(스킬무브로 제친 경우 포함)'],
+        ['볼 상실', p.e105+p.e106+p.e107, 'event_105~107'],
+        ['오프사이드 걸림 <span class="tag mute">참고</span>', p.e104, 'event_104 · 확정되지 않은 부분 매핑입니다. 실제보다 적게 잡히는 경우가 많아 참고용으로만 표시합니다.', p.e104===0],
+      ])}
+      ${zoneCard(p)}
+      ${kvCard('수비', [
+        ['태클 성공(시도)', so(p.tm,p.ta)], ['태클 성공률', fmt(pct(p.tm,p.ta))+'%'],
+        ['└ 스탠딩 태클 성공', p.e229, 'event_229'], ['└ 슬라이딩 태클 성공', p.e230, 'event_230', p.e230===0],
+        ...(p.e229!=null && p.tm!==p.e229+p.e230 ? [['└ 유형 불명', Math.max(0,p.tm-p.e229-p.e230), '태클 성공 수와 스탠딩+슬라이딩 합의 차이']] : []),
+        ['인터셉트', p.e6, 'event_6'], ['상대 볼 뺏음', p.e158, 'event_158'], ['볼 탈취', p.e108+p.e109+p.e110, 'event_108~110'],
+        ['공중볼 승리(공격)', p.e265, 'event_265'], ['공중볼 승리(수비)', p.e266, 'event_266'],
+      ], '스탠딩·슬라이딩 태클과 공중볼은 성공(승리) 횟수만 있어 유형별 성공률을 계산할 수 없습니다.')}
+      ${kvCard('기타', [
+        ['파울', add(p.e2,p.e3), 'event_2+3', add(p.e2,p.e3)===0], ['피파울', p.e4, 'event_4', p.e4===0], ['경고', p.e95+p.e213, 'event_95+213', p.e95+p.e213===0],
+      ], '', '파울 · 피파울 · 경고 없음')}`;
+  const bar = `<div class="pbar"><label class="toggle"><input type="checkbox" id="showZero" ${state.showZero?'checked':''}> 0·미기록 항목도 보기 <span class="muted">(${state.showZero?'전체 표시 중':`${hiddenN}개 숨김`})</span>${info('드물게 나오는 항목(크로스, 세컨 어시스트, 코너킥, 오프사이드 걸림, 슬라이딩 태클, 파울, 피파울, 경고)과 0인 "분류 불명" 행은 값이 0이면 숨깁니다. 초기 수집본에서 기록되지 않은 항목(–)도 함께 숨깁니다.')}</label></div>`;
+  v.innerHTML = header + bar + `<div class="pgrid">${cards}</div>
+    <p class="foot-note">event 기반 지표는 커뮤니티 추정 매핑입니다(EA 공식 정의 아님). 각 항목의 ⓘ에서 근거 이벤트를 볼 수 있고, 전체 제약사항은 목록 화면 하단에 있습니다.</p>`;
+  $('#showZero').onchange = e => { state.showZero = e.target.checked; renderPlayer(mid, pid); };
+}
+
+/* ---------- player aggregate tables: 세션 집계(#aggS) + 수집 누적(#aggA), 같은 지표·같은 렌더러 ---------- */
+const GROUPS = {
+  basic:{label:'기본', cols:[
+    ['apps','출전',null,0,'c'],['min','출전시간(분)',null,0,'c'],['rt','평균 평점',null,2,'r'],['mom','MOM',null,0,'n'],
+    ['g','골',null,0,'n'],['a','도움',null,0,'n'],['ga','공격포인트',null,0,'n']]},
+  atk:{label:'공격', cols:[
+    ['sh','슈팅',null,0,'n'],['e217','유효슈팅','event_217',0,'n'],['sotR','유효슈팅률',null,0,'r','%'],['conv','골/슈팅',null,0,'r','%'],
+    ['e13','박스 안 유효','event_13',0,'n'],['e18','박스 밖 유효','event_18',0,'n'],['e112','드리블 돌파','event_112 · 상대를 제친 횟수',0,'n'],['e174','드리블 성공','event_174 · 드리블 성공 횟수(확정 매핑)',0,'n']]},
+  pass:{label:'패스', cols:[
+    ['pc','성공','EA 집계 패스 − 오프사이드 패스(event_153)',0,'n'],['pa','시도',null,0,'n'],['pR','성공률','오프사이드 패스는 실패로 처리',0,'r','%'],
+    ['fwd','전진','event_30 − 오프사이드 패스(오프사이드는 항상 전진 패스) · 괄호는 성공 패스 대비 비율',0,'np','pc'],['e32','백','event_32 · 괄호는 성공 패스 대비 비율',0,'np','pc'],['e34','횡','event_34 · 괄호는 성공 패스 대비 비율',0,'np','pc'],
+    ['crA','크로스 성공(시도)','성공 event_36(세트피스 포함) · 시도 = 성공 + 실패 event_37(오픈플레이만) · 시도 수 기준 정렬',0,'so','e36'],['crR','크로스 성공률','성공 ÷ 시도 · 실패에 세트피스가 빠져 실제보다 높게 나올 수 있음',0,'r','%'],
+    ['e152','스루패스','event_152',0,'n'],['e143','원터치 패스','event_143 · 괄호는 성공 패스(오프사이드 제외) 대비 비율',0,'np','pc'],['e115','세컨드 어시스트','event_115',0,'n'],['e153','오프사이드 패스','event_153',0,'n']]},
+  def:{label:'수비', cols:[
+    ['tm','태클 성공',null,0,'n'],['ta','태클 시도',null,0,'n'],['tR','태클 성공률',null,0,'r','%'],
+    ['e6','인터셉트','event_6',0,'n'],['e158','상대 볼 뺏음','event_158',0,'n'],['pwin','볼 탈취','event_108+109+110',0,'n'],['plost','볼 상실','event_105+106+107',0,'n'],['e107','공격지역 상실','event_107',0,'n'],
+    ['e265','공중볼(공)','event_265',0,'n'],['e266','공중볼(수)','event_266',0,'n'],['foul','파울','event_2+3',0,'n'],['e4','피파울','event_4',0,'n'],['yc','경고','event_95+213',0,'n']]},
+};
+// 포지셔닝·판단(event_219/111/177/182)은 집계 표에서 제외 — 의미가 불분명한 피드백성 지표라 노출하지 않음(데이터는 원본에 보존).
+// 파생 컬럼이 의존하는 원시 키 (미기록 경기 수 표시용)
+const DERIVED = {ga:['g','a'],sotR:['e217','sh'],conv:['g','sh'],pR:['pc','pa'],tR:['tm','ta'],crA:['e36','e37'],crR:['e36','e37'],
+  pwin:['e108','e109','e110'],plost:['e105','e106','e107'],yc:['e95','e213'],foul:['e2','e3'],fwd:['e30','e153']};
+const missN = (a,k) => Math.max(0, ...(DERIVED[k]||[k]).map(x=>a.miss[x]||0));
+const minsFor = (a,k) => a.min - Math.max(0, ...(DERIVED[k]||[k]).map(x=>a.missSec[x]||0))/60;   // 해당 항목이 기록된 경기의 출전시간만
+function playerAgg(ms){
+  const A={};
+  ms.forEach(m=>m.players.forEach(p=>{
+    const a = A[p.id] ??= {id:p.id,name:p.name,pos:p.pos,listed:0,appsN:0,secT:0,rtSum:0,rtN:0,mom:0,miss:{},missSec:{}};
+    a.name=p.name; a.pos=p.pos; a.listed++; a.secT+=p.sec; a.mom+=p.mom; if(p.played){a.appsN++; if(p.rt!=null){a.rtSum+=p.rt; a.rtN++;}}
+    Object.keys(p).forEach(k=>{
+      if(!(/^e\d+$/.test(k)||['g','a','sh','pm','pa','pc','fwd','tm','ta','red'].includes(k))) return;
+      if(p[k]==null){ a.miss[k]=(a.miss[k]||0)+1; a.missSec[k]=(a.missSec[k]||0)+p.sec; a[k]=a[k]||0; return; }   // 미기록은 합계에서 제외하고 건수만 센다
+      a[k]=(a[k]||0)+p[k];
+    });
+  }));
+  return Object.values(A);
+}
+// build.py 의 players.json 과 playerAgg 는 같은 원시 합계 모양 → 파생값은 여기서 한 번만 계산
+function finalizeAgg(a){
+  a = {...a}; a.pos = POS[a.pos] || a.pos;
+  a.min=a.secT/60; a.apps=a.appsN; a.rt=a.rtN?a.rtSum/a.rtN:null;
+  EV.forEach(e=>{ a['e'+e] = a['e'+e]||0; });
+  a.ga=a.g+a.a; a.sotR=pct(a.e217,a.sh); a.conv=pct(a.g,a.sh); a.pR=pct(a.pc,a.pa); a.crA=a.e36+a.e37; a.crR=pct(a.e36,a.crA); a.tR=pct(a.tm,a.ta);
+  a.pwin=a.e108+a.e109+a.e110; a.plost=a.e105+a.e106+a.e107; a.yc=a.e95+a.e213; a.foul=a.e2+a.e3;
+  return a;
+}
+// 위젯: 루트 요소 + 범위 함수 + 자체 상태(그룹·모드·정렬·기간)
+function aggWidget(rootSel, provider, opts={}){
+  const root = $(rootSel); const st = {group:'basic', mode:'tot', sortKey:'min', sortDir:-1, period:'all'};
+  const q = sel => root.querySelector(sel);
+  const gSeg=q('.agg-g'), mSeg=q('.agg-m'), pSeg=q('.agg-p'), tbl=q('.agg-t');
+  gSeg.innerHTML=Object.entries(GROUPS).map(([k,g])=>`<button data-g="${k}" aria-pressed="${k===st.group}">${g.label}</button>`).join('');
+  gSeg.onclick=e=>{const b=e.target.closest('button'); if(!b) return; st.group=b.dataset.g; st.sortKey=st.group==='basic'?'min':GROUPS[st.group].cols[0][0]; st.sortDir=-1; render();};
+  mSeg.onclick=e=>{const b=e.target.closest('button'); if(!b) return; st.mode=b.dataset.m; render();};
+  if(pSeg) pSeg.onclick=e=>{const b=e.target.closest('button'); if(!b) return; st.period=b.dataset.p; render();};
+  function render(){
+    const g=GROUPS[st.group]; const {P, n, nLegacy, note=''} = provider(st);
+    const {title, label} = opts.describe(st, n);
+    q('.agg-h').textContent = title;
+    q('.agg-d').innerHTML = `<b>${label}</b>${note} · 헤더를 누르면 정렬. 출전 450분 미만 <span class="tag">표본 적음</span>.`
+      + (nLegacy ? ` 초기 수집본 ${nLegacy}경기는 일부 항목이 없어 <span class="tag mute">n경기 제외</span>로 표시.` : '');
+    gSeg.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed', b.dataset.g===st.group));
+    mSeg.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed', b.dataset.m===st.mode));
+    if(pSeg) pSeg.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed', b.dataset.p===st.period));
+    const val=(a,c)=>{const k=c[0],kind=c[4]; const v=a[k]; const mn=minsFor(a,k); return (st.mode==='p90'&&kind==='n'&&mn>0)? v/mn*90 : v;};
+    const missTag=(a,k)=>{ const n=missN(a,k); return n ? `<span class="tag mute" tabindex="0" data-tip="초기 수집본에 없는 항목이라 ${n}경기는 합계·비율에서 제외했습니다 (${a.listed-n}경기 기준)">${n}경기 제외</span>` : ''; };
+    if(st.sortKey!=='name' && !g.cols.find(c=>c[0]===st.sortKey)) st.sortKey=g.cols[0][0];
+    P.sort((x,y)=>{
+      if(st.sortKey==='name') return st.sortDir*x.name.localeCompare(y.name);
+      const c=g.cols.find(c=>c[0]===st.sortKey); return st.sortDir*((val(x,c)??-1)-(val(y,c)??-1));
+    });
+    const arr=k=>st.sortKey===k?`<span class="arr">${st.sortDir<0?'▼':'▲'}</span>`:'';
+    const head=`<thead><tr><th class="l sort" data-k="name">선수${arr('name')}</th><th class="l">포지션</th>`+g.cols.map(c=>`<th class="sort" data-k="${c[0]}">${c[1]}${c[2]?info(c[2]):''}${st.mode==='p90'&&['n','so','np'].includes(c[4])?'<br><span class="muted">/90</span>':''}${arr(c[0])}</th>`).join('')+'</tr></thead>';
+    const body=P.map(a=>`<tr><td class="l"><b>${esc(a.name)}</b>${a.min<450?'<span class="tag">표본 적음</span>':''}</td><td class="l">${a.pos}</td>`+
+      g.cols.map(c=>{
+        const k=c[0],d=c[3],kind=c[4],u=c[5]||''; const v=val(a,c);
+        if(k==='apps') return `<td>${a.apps} <span class="muted">/ ${a.listed}</span></td>`;
+        const mt = missTag(a,k); if(missN(a,k)>=a.listed) return `<td>–${mt}</td>`;   // 전부 미기록
+        if(kind==='so'){ const s=a[u], at=v; const mn=minsFor(a,k); const p90=st.mode==='p90'&&mn>0; const f=x=>p90?fmt(x/mn*90,2):fmt(x); return `<td>${f(s)}<span class="muted">(${f(at)})</span>${mt}</td>`; }
+        if(kind==='np'){ const base=a[u]; const mn=minsFor(a,k); const p90=st.mode==='p90'&&mn>0; return `<td>${p90?fmt(v/mn*90,2):fmt(v)} <span class="muted">(${base?fmt(v/base*100):'–'}%)</span>${mt}</td>`; }
+        const txt = v==null?'–':fmt(v,(st.mode==='p90'&&kind==='n')?2:d)+u;
+        if(kind==='r'&&u==='%'&&v!=null) return `<td><div class="bar-in">${txt}<div class="minibar"><span style="width:${Math.min(100,v)}%"></span></div></div>${mt}</td>`;
+        return `<td>${txt}${mt}</td>`;
+      }).join('')+'</tr>').join('');
+    tbl.innerHTML=head+'<tbody>'+(body||`<tr><td class="muted" colspan="${g.cols.length+2}">대상 경기 없음</td></tr>`)+'</tbody>';
+    tbl.querySelectorAll('th.sort').forEach(th=>th.onclick=()=>{
+      const k=th.dataset.k; if(st.sortKey===k) st.sortDir*=-1; else {st.sortKey=k; st.sortDir=k==='name'?1:-1;} render();
+    });
+  }
+  return render;
+}
+const renderAggS = aggWidget('#aggS', () => { const ms = noDnf(curMatches()); return {P: playerAgg(ms).map(finalizeAgg), n: ms.length, nLegacy: ms.filter(m=>m.legacy).length, note: state.exDnf?' · 이탈 경기 제외':''}; }, {
+  describe: (st, n) => { const S=curSess(); return {title:`세션 선수 집계 · ${S.label}`, label:`이 세션 ${n}경기`}; } });
+const renderAggA = aggWidget('#aggA', st => {
+  const pre = PLAYERS_PRE[st.period==='last5'?'last5':'all'];
+  const nLegacy = st.period==='last5' ? sessions.slice(0,5).reduce((s,x)=>s+(x.legacy?x.n:0),0) : META.counts.legacy;
+  return {P: Object.values(pre.players).map(finalizeAgg), n: pre.n, nLegacy, note: state.exDnf?' · <span class="muted">(누적 표는 빌드 시 집계되어 이탈 경기를 포함합니다)</span>':''};
+}, {
+  describe: (st, n) => ({title:'선수별 스탯 집계 · 수집 누적', label: st.period==='last5' ? `최근 ${Math.min(5,sessions.length)}세션 (${n}경기)` : `수집 누적 (${RANGE()}, ${n}경기)`}) });
+function renderPlayers(){ renderAggS(); renderAggA(); }
+
+/* ---------- notes ---------- */
+function buildNotes(){ return [
+  `<b>자동 수집.</b> GitHub Actions가 KST 21~03시는 30분, 그 외 시간은 3시간 간격으로 EA API를 조회해 새 경기를 저장소에 쌓고 이 페이지를 다시 만듭니다. EA API는 매치타입당 최근 10경기만 돌려주므로, 한 수집 간격 안에 10경기 넘게 치르면 그 사이 경기는 영구히 누락됩니다(상단 ⓘ에 누락 건수 표시). 수집 시작(${FIRST_SEEN()}) 이전 경기는 없습니다.`,
+  '<b>리그·플레이오프·친선</b> 경기를 모두 수집해 세션과 누적에 그대로 포함합니다. 리그가 아닌 경기는 상대팀 이름 뒤에 <span class="tag mute">플레이오프</span> / <span class="tag mute">친선</span> 태그가 붙습니다. 상단 시즌 누적은 EA가 집계한 리그 값입니다.',
+  '<b>세션</b> = 60분 안에 이어진 경기 묶음. 관측된 세션 내 최대 간격은 28분이었습니다. 세션 ID는 첫 경기 matchId라 뒤에 경기가 붙어도 바뀌지 않습니다. "진행 중"은 지금 시각 기준 마지막 경기가 2시간 이내인 세션입니다.',
+  '<b>초기 수집본(9/29~10/3, 20경기)</b>은 자동 수집 전에 수동으로 받은 스냅샷이라 이벤트 36종만 저장했습니다(현재 61종). 패스 실패의 방향·거리, 크로스, 빗나간 슈팅 위치, 태클 유형, 파울(event_3), 팀 경고·오프사이드가 없어 해당 항목은 "–" 또는 "n경기 제외"로 표시합니다. 90분당 값은 기록된 경기의 출전시간만으로 계산합니다.',
+  '<b>시즌 누적</b>(상단)은 EA가 집계한 현 시즌 71경기 값이고, <b>수집 누적</b>(선수별 집계)은 수집 시작 이후 경기만입니다. 두 숫자는 범위가 달라 직접 비교할 수 없습니다.',
+  '<b>최근 10경기만 조회됩니다.</b> <code>/clubs/matches</code>는 <code>maxResultCount</code>를 늘려도 10건만 반환합니다. 시즌 전체 세부 스탯은 소급할 수 없고 주기적으로 수집해 쌓아야 합니다.',
+  `<b>상대 SR(스킬 레이팅)</b>은 상대 클럽을 처음 만난 수집 시점에 <code>/clubs/overallStats</code>로 1회 조회한 값입니다. 경기 당시 값과 최대 수집 간격만큼 어긋날 수 있고, 10/4 이전 경기의 상대는 조회하지 않아 비어 있습니다. 시즌 경기 수가 10경기 미만인 클럽은 "n경기" 태그로 표시했습니다. 괄호 값 = 상대 − 우리.`,
+  '<b>득점자</b>는 사람 선수의 골 기록입니다. 팀 득점보다 적으면 차이를 "기타"로 표시합니다(AI 동료 득점 또는 자책골 추정).',
+  '<b>패스 성공</b> = EA 집계 패스 수(<code>passesmade</code>) − 오프사이드 패스(event_153). EA 집계값은 오프사이드에 걸린 패스까지 성공으로 세기 때문에(이번 데이터 59건 중 56건에서 확인) 실패로 처리했습니다. 시도 수는 EA 값 그대로입니다. 오프사이드는 항상 전진 패스이므로 전진 패스 성공에서도 뺐습니다. 거리별 성공에는 오프사이드 패스가 섞여 있을 수 있습니다.',
+  '<b>패스 점유율</b> = 우리 성공 패스 ÷ 양 팀 성공 패스 합(오프사이드 제외). 실제 볼 점유율(소유 시간)이 아니며 양 팀 모두 사람 선수 패스만 포함합니다. AI 동료가 많은 팀일수록 낮게 나옵니다.',
+  '<b>사람 선수만 기록됩니다.</b> 슈팅·패스·태클·경고는 양 팀 사람 선수 합계입니다. 퇴장은 API의 팀 집계(<code>aggregate.redcards</code>), 경고는 선수별 이벤트(event_95+213) 합입니다.',
+  '<b>결과 판정·DNF:</b> 결과 코드 1=승, 2=패, 4=무로 해석했습니다. 그 외 코드(10, 16385), <code>winnerByDnf=1</code>, 사람 선수 전원이 10분 미만 뛴 경기는 DNF로 표시하고 승패는 스코어로 판정했습니다. 코드 의미는 관찰 기반 추정입니다.',
+  '<b>출전 판정:</b> 경기 시간(<code>secondsPlayed</code>, 게임 내 시간) 10분 이상만 "출전"으로 세고 평균 평점에 반영합니다.',
+  '<b>0 값 숨김:</b> 선수 세부 화면에서 드물게 나오는 항목(크로스, 세컨 어시스트, 코너킥, 오프사이드 걸림, 슬라이딩 태클, 파울, 피파울, 경고 — 최근 데이터에서 발생률 20% 미만)과 0인 "분류 불명" 행은 기본으로 숨기며, "0인 항목도 보기"로 모두 볼 수 있습니다.',
+  '<b>패스 방향·거리별 시도</b> = 성공 + 실패 이벤트. 이벤트 합이 총 패스 수(<code>passesmade</code>/<code>passattempts</code>)와 정확히 맞지 않아 차이를 "분류 불명"으로 표시합니다.',
+  '<b>크로스</b>: 성공 = event_36(세트피스 크로스 포함), 시도 = 성공 + 실패(event_37, 오픈플레이만). README의 "크로스 시도"(event_157)와 1~2건 차이가 나는 경기가 있습니다. 코너킥(event_145)은 별도입니다.',
+  '<b>드리블 돌파</b>(event_112)는 상대를 제친 횟수이며 스킬무브로 제친 경우(event_38)를 포함합니다. <b>드리블 성공</b>(event_174)은 확정 매핑으로, 선수별 집계 표의 공격 탭에 있습니다.',
+  '<b>태클 유형</b>: 스탠딩 성공(event_229) + 슬라이딩 성공(event_230)은 태클 성공 수와 대부분 일치합니다(출전 32건 중 30건). 실패 태클은 유형별로 나뉘지 않아 유형별 성공률은 계산할 수 없습니다.',
+  '<b>오프사이드 걸림(event_104)</b>은 확정되지 않은 부분 매핑입니다(fc27-clubs-api 문서: "횟수가 자주 적게 잡힘"). 그래서 "참고" 표시를 붙였습니다. 오프사이드 패스(event_153, 확정)와는 다른 지표입니다.',
+  '<b>이벤트 ID 해석은 커뮤니티 추정</b>입니다(eafc-pro-clubs-api-research README, 이를 따르는 fc27-clubs-api 문서와 대조 완료 — 두 문서는 같은 연구에 기반하므로 독립 검증은 아님). 골(event_214)·도움(event_11)·슈팅(event_217+218)은 이번 데이터 40건 모두 필드 값과 일치했습니다. 나머지는 EA 공식 정의가 아닙니다.',
+  '<b>제공되지 않는 지표:</b> 실제 점유율, xG, 키패스, 활동량(뛴 거리), 경기 내 시간대별 이벤트.',
+  '비공식 API이므로 응답 구조·필드가 예고 없이 바뀔 수 있습니다.',
+]; }
+function renderNotes(){
+  const NOTES = buildNotes();
+  $('#notes').innerHTML = NOTES.map(s=>`<li>${s}</li>`).join('');
+  $('#notesCount').textContent = `${NOTES.length}개 항목 · 눌러서 펼치기`;
+  $('#notesBox').ontoggle = e => { $('#notesCount').textContent = `${NOTES.length}개 항목${e.target.open?'':' · 눌러서 펼치기'}`; };
+}
+
+/* ---------- router (비동기: 세션 파일은 필요할 때 로드) ---------- */
+let routeSeq = 0;
+async function route(){
+  hideTip();
+  const seq = ++routeSeq;
+  const h = location.hash;
+  const mp = h.match(/^#\/m\/([^/]+)\/p\/(.+)$/), mm = h.match(/^#\/m\/([^/]+)$/), ss = h.match(/^#\/s\/([^/]+)$/);
+  const busy = on => { $('#home').classList.toggle('busy', on); $('#pview').classList.toggle('busy', on); };
+  try{
+    busy(true);
+    let sid = null;
+    if(mp || mm){ sid = await sidOfMatch(mp ? mp[1] : mm[1]); }
+    else if(ss && sessById(ss[1])) sid = ss[1];
+    if(!sid) sid = sessions[0].id;
+    await ensureSession(sid);
+    if(seq !== routeSeq) return;                       // 더 최근 라우팅이 진행 중
+    const prevSid = state.sid; state.sid = sid;
+    if(mp){
+      $('#home').hidden=true; $('#homeCtl').hidden=true; $('#pview').hidden=false;
+      renderPlayer(mp[1], decodeURIComponent(mp[2])); window.scrollTo(0,0); return;
+    }
+    $('#pview').hidden=true; $('#home').hidden=false; $('#homeCtl').hidden=false;
+    state.open = mm ? mm[1] : null;
+    renderAll();
+    if(mm){ const el=document.querySelector(`#matches .mrow[data-id="${mm[1]}"]`); if(el) el.scrollIntoView({block:'start'}); }
+    else if(ss && prevSid!==sid){ window.scrollTo(0,0); }
+  }catch(err){
+    $('#boot').hidden=false; $('#boot').innerHTML = `<div class="notice">데이터를 불러오지 못했습니다: ${esc(err.message)}</div>`;
+  }finally{ busy(false); }
+}
+function renderAll(){renderRecent();renderMatches();renderSessions();renderPlayers();}
+$('#exDnf').onchange=e=>{state.exDnf=e.target.checked;renderAll();};
+window.addEventListener('hashchange', route);
+loadCore().then(()=>{
+  if(!sessions.length){ $('#boot').textContent = '아직 수집된 경기가 없습니다. 첫 수집 후 표시됩니다.'; renderHeader(); return; }
+  $('#boot').hidden=true; renderHeader(); renderNotes();
+  loadRuns().then(r=>{ RUNS=r; renderHeader(); });   // 수집 시각은 비동기로 뒤늦게 채움
+  return route();
+}).catch(err=>{ $('#boot').innerHTML = `<div class="notice">데이터를 불러오지 못했습니다: ${esc(err.message)}<br><span class="muted">data/meta.json 이 아직 없거나(첫 빌드 전) 네트워크 오류입니다.</span></div>`; });
+</script>
+</body>
+</html>
