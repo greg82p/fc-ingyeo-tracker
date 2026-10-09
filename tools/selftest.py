@@ -35,8 +35,10 @@ def fake_match(mid: str, ts: int, our: str, opp: str, our_goals=2, opp_goals=1, 
     return {
         "matchId": mid, "timestamp": ts, "timeAgo": {"number": 1, "unit": "hours"},
         "clubs": {
-            our: {"goals": str(our_goals), "goalsAgainst": str(opp_goals), "result": result, "winnerByDnf": "0", "details": {"name": "FC INGYEO", "clubId": int(our)}},
-            opp: {"goals": str(opp_goals), "goalsAgainst": str(our_goals), "result": "2", "winnerByDnf": "0", "details": {"name": "Opponent United", "clubId": int(opp)}},
+            our: {"goals": str(our_goals), "goalsAgainst": str(opp_goals), "result": result, "winnerByDnf": "0", "TEAM": "2055",
+                  "details": {"name": "FC INGYEO", "clubId": int(our), "teamId": 2055, "customKit": {"crestAssetId": "99160104", "selectedKitType": "0"}}},
+            opp: {"goals": str(opp_goals), "goalsAgainst": str(our_goals), "result": "2", "winnerByDnf": "0", "TEAM": "99161026",
+                  "details": {"name": "Opponent United", "clubId": int(opp), "teamId": 241, "customKit": {"crestAssetId": "99161026", "selectedKitType": "1"}}},
         },
         "players": {
             our: {"172777124": player("172777124", "lanil"), "226084863": player("226084863", "Aparensis")},
@@ -71,8 +73,18 @@ def main() -> int:
                 if params["clubIds"] == our:
                     return [dict(overall)]
                 return [{"skillRating": "1450", "gamesPlayed": "40"}]
+            if endpoint == "members/stats":
+                return {"members": [
+                    {"name": "lanil", "gamesPlayed": "83", "winRate": "31", "goals": "55", "assists": "12", "cleanSheetsDef": "12", "cleanSheetsGK": "0",
+                     "shotSuccessRate": "41", "passesMade": "1300", "passSuccessRate": "72", "ratingAve": "7.3", "tacklesMade": "60", "tackleSuccessRate": "30",
+                     "manOfTheMatch": "9", "redCards": "1", "proOverall": "85", "favoritePosition": "forward", "proName": ""},
+                    {"name": "nobody", "gamesPlayed": "0", "winRate": "0", "goals": "0", "assists": "0", "cleanSheetsDef": "0", "cleanSheetsGK": "0",
+                     "shotSuccessRate": "0", "passesMade": "0", "passSuccessRate": "0", "ratingAve": "", "tacklesMade": "0", "tackleSuccessRate": "0",
+                     "manOfTheMatch": "0", "redCards": "0", "proOverall": "", "favoritePosition": "", "proName": ""}], "positionCount": {}}
+            if endpoint == "clubs/info":
+                return {params["clubIds"]: {"name": "Legacy Club", "clubId": int(params["clubIds"]), "teamId": 5, "customKit": {"crestAssetId": "99000001", "selectedKitType": "0"}}}
             if endpoint == "currentSeasonLeaderboard/search":
-                return [{"clubId": our, "currentDivision": "5", "points": "47", "cleanSheets": "28", "clubInfo": {"name": "FC INGYEO", "teamId": 2055}}]
+                return [{"clubId": our, "currentDivision": "5", "points": "47", "cleanSheets": "28", "clubInfo": {"name": "FC INGYEO", "teamId": 2055, "customKit": {"crestAssetId": "99160104", "selectedKitType": "0"}}}]
             raise AssertionError(endpoint)
         fake_get.fail_403 = False
         collect.get_json = fake_get
@@ -91,9 +103,18 @@ def main() -> int:
         assert state["club"]["gp"] == 71 and state["club"]["div"] == 5 and state["club"]["pts"] == 47, state["club"]
         assert state["rawCount"] == 3 and "lastRunAt" not in state and "lastSuccessAt" not in state, state
         state_bytes_1 = (tmp / "meta" / "state.json").read_bytes()
-        opps = json.loads((tmp / "meta" / "opponents.json").read_text())
-        assert set(opps) == {opp, "555556"} and opps[opp]["sr"] == 1450, opps
-        print("① first run OK:", raw, "masked:", names)
+        # 초기 임포트 상대(엠블럼 정보 없음)를 미리 하나 심어 백필을 확인
+        opps_path = tmp / "meta" / "opponents.json"
+        opps = json.loads(opps_path.read_text())
+        assert opps[opp]["crest"] == {"team": 99161026, "teamId": 241, "crestAssetId": 99161026, "kitType": 1}, opps[opp]
+        opps["777777"] = {"name": "Legacy Club", "sr": 1500, "gp": 10, "seenAt": "2026-10-08", "firstMatchId": None, "source": "legacy"}
+        opps_path.write_text(json.dumps(opps))
+        mem = json.loads((tmp / "meta" / "members.json").read_text())
+        assert mem["members"][0]["name"] == "lanil" and mem["members"][0]["red"] == 1 and mem["members"][1]["rt"] is None, mem
+        assert state["club"]["crest"]["team"] == 2055 and state["club"]["crest"]["crestAssetId"] == 99160104, state["club"]
+        mem_bytes_1 = (tmp / "meta" / "members.json").read_bytes()
+        assert set(opps) == {opp, "555556", "777777"} and opps[opp]["sr"] == 1450, opps
+        print("① first run OK:", raw, "masked:", names, "crest+members stored")
 
         # ② 같은 응답으로 재실행 → 새 파일 0, 상대 조회 없음
         calls.clear(); assert collect.main() == 0
@@ -102,6 +123,9 @@ def main() -> int:
         assert json.loads((tmp / "meta" / "gaps.json").read_text()) == []
         # 변경 없는 실행: state.json 이 바이트 단위로 동일해야 커밋이 생기지 않는다
         assert (tmp / "meta" / "state.json").read_bytes() == state_bytes_1, "state.json changed on a no-op run"
+        assert (tmp / "meta" / "members.json").read_bytes() == mem_bytes_1, "members.json changed on a no-op run"
+        opps = json.loads(opps_path.read_text())
+        assert opps["777777"]["crest"] == {"team": None, "teamId": 5, "crestAssetId": 99000001, "kitType": 0}, opps["777777"]   # clubs/info 백필
         print("② rerun OK: 0 new, no duplicate opponent lookups, state.json unchanged")
 
         # ③ 리그 gamesPlayed 가 74 로 늘었는데 새 리그 경기는 1건 → 누락 2건 기록
@@ -130,6 +154,8 @@ def main() -> int:
         sfile = json.loads((tmp / "docs" / "data" / "sessions" / "1001.json").read_text())
         m = sfile["matches"][0]
         assert m["oppN"] == 2 and m["us"]["yc"] == 2 and m["us"]["off"] == 2 and m["us"]["pc"] == 40, (m["oppN"], m["us"])
+        assert m["crest"] == [99161026, 241], m["crest"]                     # TEAM 우선, 커스텀 크레스트 → teamId
+        rows = json.loads((tmp / "docs" / "data" / "matches.json").read_text()); assert rows[0][10] == [99161026, 241], rows[0]
         p = m["players"][0]
         assert p["pc"] == 20 and p["fwd"] == 7 and p["ev"]["215"] == 20 and p["id"] == "172777124", p
         players = json.loads((tmp / "docs" / "data" / "players.json").read_text())["all"]["players"]
@@ -142,7 +168,10 @@ def main() -> int:
         assert build.main() == 0
         after = {p.name: p.read_bytes() for p in (tmp / "docs" / "data").rglob("*.json")}
         assert before == after, "build output is not deterministic"
-        print("⑤ build OK (deterministic):", meta["counts"], "hash", meta["dataHash"])
+        assert meta["clubCrest"] == [2055, 99160104], meta["clubCrest"]      # 실제 배지(kitType 0) → teamId 먼저
+        season = json.loads((tmp / "docs" / "data" / "players.json").read_text())["season"]
+        assert season["players"][0]["id"] == "172777124" and season["players"][0]["red"] == 1 and season["players"][1]["id"] == "name:nobody", season
+        print("⑤ build OK (deterministic):", meta["counts"], "hash", meta["dataHash"], "crest", meta["clubCrest"], "season rows", len(season["players"]))
         print("ALL OK")
         return 0
     finally:

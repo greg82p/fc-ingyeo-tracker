@@ -80,6 +80,14 @@ tbody tr:hover>td{background:var(--surface-2)}
 .chip.dnf{background:var(--warn-bg);color:var(--warn-ink);font-size:11px;margin-left:4px;cursor:help}
 .tag{display:inline-block;border-radius:5px;padding:0 5px;font-size:11px;background:var(--warn-bg);color:var(--warn-ink);margin-left:4px;font-weight:600;white-space:nowrap}
 .tag.mute{background:var(--surface-2);color:var(--muted)}
+/* club crests (EA CDN, onerror → 다음 후보 → 이니셜) */
+.crest{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;margin-right:7px;vertical-align:middle;flex:none;border-radius:6px;overflow:hidden}
+.crest img{width:100%;height:100%;object-fit:contain;display:block}
+.crest.ph{background:var(--surface-2);color:var(--text-2);font-size:11px;font-weight:700;border-radius:50%}
+.crest.lg{width:30px;height:30px;margin-right:8px}
+.c-opp{display:flex;align-items:flex-start;min-width:0}.c-opp>.crest{margin-top:1px}.c-opp>.oppt{min-width:0}
+.c-opp .scorers{display:block}
+#title .crest{width:28px;height:28px;margin-right:8px;vertical-align:-6px}
 .agg-t td .tag.mute{display:block;width:max-content;margin:2px 0 0 auto}
 /* info icon + tooltip */
 .info{display:inline-flex;align-items:center;justify-content:center;width:15px;height:15px;border-radius:50%;border:1px solid var(--muted);color:var(--muted);font-size:10px;font-weight:700;font-style:normal;line-height:1;margin-left:4px;cursor:help;flex:none;vertical-align:1px}
@@ -136,6 +144,10 @@ tbody tr:hover>td{background:var(--surface-2)}
 .form{display:flex;gap:3px;flex-wrap:wrap}
 .form .chip{min-width:18px;padding:0 4px;font-size:11px}
 .search{display:flex;gap:8px;align-items:center;margin:0 0 10px}
+.more{padding:10px 8px 2px;text-align:center}
+.more button{border:1px solid var(--border);background:var(--surface);color:var(--s1);border-radius:999px;padding:7px 16px;font:inherit;font-size:13px;cursor:pointer}
+.more button:hover{background:var(--surface-2)}
+.more button .muted{color:var(--muted)}
 .search input{flex:1;min-width:0;max-width:360px;border:1px solid var(--border);border-radius:8px;padding:7px 10px;font:inherit;font-size:13px;background:var(--surface);color:var(--text)}
 .search input:focus{outline:2px solid var(--s1);outline-offset:0;border-color:transparent}
 .snav{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
@@ -299,6 +311,13 @@ footer{color:var(--muted);font-size:12px;margin-top:8px}
       <div class="tbl-wrap"><table class="agg-t"></table></div>
     </section>
 
+    <section class="card" id="seasonCard" hidden>
+      <div class="tabs">
+        <div><h2>시즌 선수 누적 · EA 집계</h2><p class="desc" style="margin:0" id="seasonDesc"></p></div>
+      </div>
+      <div class="tbl-wrap"><table id="seasonT"></table></div>
+    </section>
+
     <details class="card" id="notesBox">
       <summary><h2>지표 정의와 제약사항</h2><span class="muted" id="notesCount"></span></summary>
       <ul class="notes" id="notes"></ul>
@@ -368,7 +387,7 @@ async function ensureSession(sid){
 async function ensureIndex(){
   if(INDEX) return INDEX;
   const rows = await getJson('matches.json', META.dataHash);
-  INDEX = rows.map(([id,ts,type,opp,oppId,gf,ga,res,dnf,sid]) => ({id,ts,type,opp,oppId,gf,ga,res,dnf:!!dnf,sid}));
+  INDEX = rows.map(([id,ts,type,opp,oppId,gf,ga,res,dnf,sid,crest]) => ({id,ts,type,opp,oppId,gf,ga,res,dnf:!!dnf,sid,crest:crest||[]}));
   INDEX.forEach(r => matchSid.set(r.id, r.sid));
   return INDEX;
 }
@@ -382,9 +401,9 @@ async function loadCore(){
   META = await getJson('meta.json', Date.now());
   EV = META.evFull; C = META.club || {};
   const [sl, pl] = await Promise.all([getJson('sessions.json', META.dataHash), getJson('players.json', META.dataHash)]);
-  const now = Date.now()/1000;
-  sessions = sl.map(s => ({...s, ms: null, live: now - s.end < 7200,
+  sessions = sl.map(s => ({...s, ms: null,
     label: kd(s.start) + (kmd(s.start)!==kmd(s.end) ? ' ~ '+kmd(s.end) : ''), range: `${kst(s.start)} ~ ${kt(s.end)}`}));
+  liveSnapshot = liveSnap();                                             // 이후 1분마다 비교해 '진행 중' 표시가 바뀌면 다시 그린다
   PLAYERS_PRE = pl;
   if(sessions.length) await ensureSession(sessions[0].id);
 }
@@ -400,8 +419,27 @@ const pct = (a,b) => b ? a/b*100 : null;
 const esc = s => String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const info = t => `<span class="info" tabindex="0" role="button" aria-label="${esc(t)}" data-tip="${esc(t)}"></span>`;
 const sgn = v => (v>0?'+':v<0?'−':'±') + Math.abs(v);
+const CREST_URL = id => `https://eafc24.content.easports.com/fifa/fltOnlineAssets/24B23FDE-7835-41C2-87A2-F453DFDB2E82/2024/fcweb/crests/256x256/l${id}.png`;
+// 엠블럼: 후보 id 를 앞에서부터 시도, 전부 실패하면 이니셜 플레이스홀더. (이미지는 EA CDN 핫링크 — EA 가 경로를 바꾸면 플레이스홀더로 떨어짐)
+const crestImg = (ids, name, cls='') => {
+  const ph = `<span class="crest ph ${cls}" title="${esc(name||'')}">${esc((name||'?').trim().charAt(0).toUpperCase())}</span>`;
+  if(!ids || !ids.length) return ph;
+  return `<span class="crest ${cls}"><img src="${CREST_URL(ids[0])}" alt="" loading="lazy" data-c="${ids.slice(1).join(',')}" data-n="${esc(name||'')}" onerror="crestErr(this)"></span>`;
+};
+window.crestErr = img => {
+  const rest = (img.dataset.c||'').split(',').filter(Boolean);
+  if(rest.length){ img.dataset.c = rest.slice(1).join(','); img.src = CREST_URL(rest[0]); return; }
+  const w = img.parentElement; const n = img.dataset.n || '?';
+  w.classList.add('ph'); w.textContent = n.trim().charAt(0).toUpperCase(); w.title = n;
+};
 const typeTag = m => TYPE_TAG[m.type] ? `<span class="tag mute" data-tip="${m.type==='playoff'?'플레이오프 매치':'친선 매치'} (리그 경기가 아님)">${TYPE_TAG[m.type]}</span>` : '';
-let state = {exDnf:false, open:null, showZero:false, sid:null, q:''};
+const LIVE_SEC = 3600;                                                  // 마지막 경기 후 1시간 안에 다음 경기가 없으면 세션 종료로 본다
+const isLive = s => (Date.now()/1000 - s.end) < LIVE_SEC;
+const LIVE_TIP = '마지막 경기가 1시간 이내라 아직 진행 중인 세션으로 봅니다. 1시간 동안 새 경기가 없으면 표시가 사라집니다.';
+const PAGE_SIZE = 10;                                                   // 세션 목록·검색 결과 페이지 크기
+let liveSnapshot = null;                                                // 세션별 '진행 중' 여부 스냅샷 (바뀐 경우에만 다시 그리기 위해)
+const liveSnap = () => sessions.map(isLive).join('');
+let state = {exDnf:false, open:null, showZero:false, sid:null, q:'', sessShown:PAGE_SIZE, hitShown:PAGE_SIZE*3};
 const curSess = () => sessById(state.sid) || sessions[0];
 const curMatches = () => (curSess() && curSess().ms) || [];
 const noDnf = ms => ms.filter(m => !(state.exDnf && m.dnf));
@@ -450,10 +488,10 @@ async function loadRuns(){
   }catch(e){ return null; }
 }
 function renderHeader(){
-  $('#title').textContent = (C.name || 'FC INGYEO') + ' · 스탯 트래커';
+  $('#title').innerHTML = (META.clubCrest && META.clubCrest.length ? crestImg(META.clubCrest, C.name) : '') + esc(C.name || 'FC INGYEO') + ' · 스탯 트래커';
   $('#meta').textContent = `clubId ${META.clubId} · 리그 · 플레이오프 · 친선`;
   const gapN = (META.gaps||[]).reduce((s,g)=>s+(g.missedLeagueMatches||0),0);
-  const tipBase = `GitHub Actions가 KST 21~03시는 30분, 그 외 3시간 간격으로 수집합니다. 새 경기가 있을 때만 저장소가 바뀝니다. 지표 v${META.metricsVersion} · 데이터 ${META.dataHash}.` + (gapN?` 수집 누락 ${gapN}경기 기록됨.`:'');
+  const tipBase = `GitHub Actions가 KST 21~03시에만 20분 간격으로 수집합니다(낮에는 수집하지 않음). 새 경기가 있을 때만 저장소가 바뀝니다. 지표 v${META.metricsVersion} · 데이터 ${META.dataHash}.` + (gapN?` 수집 누락 ${gapN}경기 기록됨.`:'');
   let body, cls = 'fresh';
   if(RUNS && RUNS.nRuns){
     const last = isoToTs(RUNS.lastSuccessAt), stale = !last || (Date.now()/1000 - last) > 86400;
@@ -490,7 +528,7 @@ function renderRecent(){
   const shU=ms.reduce((s,m)=>s+m.us.sh,0), shT=ms.reduce((s,m)=>s+m.them.sh,0);
   const dnfN = S.dnfN;
   const i = sessions.findIndex(s=>s.id===S.id), newer = sessions[i-1], older = sessions[i+1];
-  $('#recentH').innerHTML = (isLatest() ? '최근 세션 요약' : `세션 요약 · ${S.label}`) + (S.live ? `<span class="tag" style="vertical-align:middle" data-tip="수집 시점 기준 마지막 경기가 2시간 이내라 이 세션에 경기가 더 추가될 수 있습니다">진행 중</span>` : '');
+  $('#recentH').innerHTML = (isLatest() ? '최근 세션 요약' : `세션 요약 · ${S.label}`) + (isLive(S) ? `<span class="tag" style="vertical-align:middle" data-tip="${LIVE_TIP}">진행 중</span>` : '');
   $('#recentDesc').textContent = ms.length ? `${S.range} (KST) · ${ms.length}경기` + (dnfN ? (state.exDnf?` · 이탈 ${dnfN}건 제외`:` · 이탈 ${dnfN}건 포함`) : '') : '대상 경기 없음';
   $('#snav').innerHTML = (older ? `<a href="#/s/${older.id}">← 이전 세션 <span class="muted">${older.label}</span></a>` : `<span class="dis">← 이전 세션 없음</span>`)
                        + (newer ? `<a href="#/s/${newer.id}">다음 세션 <span class="muted">${newer.label}</span> →</a>` : (isLatest()?'':`<a href="#/">최근 세션으로 →</a>`));
@@ -521,7 +559,7 @@ function matchDetail(m){
   const u=m.us, t=m.them; const [pu,pt] = posShare(m);
   const cmp = `<div class="cmpbox">
     <h3>경기 스탯${info('양 팀 모두 사람 선수 합계 기준입니다. AI 동료·AI 골키퍼 기록은 API에 없습니다.')}</h3>
-    <div class="teams"><span>${esc(C.name)}</span><span>${esc(m.opp)}</span></div>
+    <div class="teams"><span>${esc(C.name)}</span><span>${esc(m.opp)}${m.crest&&m.crest.length?` ${crestImg(m.crest, m.opp)}`:''}</span></div>
     <div class="srline"><span>SR ${C.sr}</span><span>SR ${m.oppSR??'–'}${m.oppGP!=null&&m.oppGP<10?` · 시즌 ${m.oppGP}경기`:''}</span></div>
     ${cmpRow('패스 점유율', pu||0, pt||0, {fmtA:fmt(pu)+'%', fmtB:fmt(pt)+'%', tip:'우리 성공 패스 ÷ 양 팀 성공 패스 합(오프사이드 패스 제외). 사람 선수 패스만 집계되므로 실제 볼 점유율과 다릅니다.'})}
     ${cmpRow('슈팅', u.sh, t.sh)}
@@ -559,7 +597,7 @@ function matchRow(m, {open=false, expandable=true}={}){
   return `<div class="lrow mgrid mrow ${ex?'ex':''} ${open?'open':''}" role="${expandable?'button':'link'}" tabindex="0" ${expandable?`aria-expanded="${open}"`:''} data-id="${m.id}" data-x="${expandable?1:0}">
       <span class="c-car">${expandable?(open?'▾':'▸'):'›'}</span>
       <span class="c-date">${kst(m.ts)}</span>
-      <span class="c-opp"><b>${esc(m.opp)}</b>${typeTag(m)}${sc?`<span class="scorers">${sc}</span>`:''}</span>
+      <span class="c-opp">${crestImg(m.crest, m.opp)}<span class="oppt"><b>${esc(m.opp)}</b>${typeTag(m)}${sc?`<span class="scorers">${sc}</span>`:''}</span></span>
       <span class="c-score">${m.gf} : ${m.ga}</span>
       <span class="c-res"><span class="chip ${m.res}">${RK[m.res]}</span>${m.dnf?`<span class="chip dnf" tabindex="0" data-tip="${esc(m.dnfNote)}">DNF</span>`:''}</span>
       <span class="meta">
@@ -596,39 +634,57 @@ function renderSessions(){
     const hits = INDEX.filter(r=>r.opp.toLowerCase().includes(q));
     const ids = new Set(hits.map(r=>r.oppId));
     $('#qInfo').textContent = `${hits.length}경기 · 클럽 ${ids.size}개 일치 · 누르면 해당 세션으로 이동`;
+    const shown = hits.slice(0, state.hitShown);
+    const moreHits = hits.length > shown.length ? `<div class="more"><button type="button" id="moreHits">이전 결과 더 보기 <span class="muted">(${hits.length - shown.length}경기 남음)</span></button></div>` : '';
     const head = `<div class="lrow lhead igrid" role="row"><span></span><span>일시(KST)</span><span>상대</span><span class="r">스코어</span><span>결과</span><span>세션</span></div>`;
-    $('#sessions').innerHTML = hits.length ? head + hits.map(r=>{ const s=sessById(r.sid); return `<div class="lrow igrid irow" role="link" tabindex="0" data-id="${r.id}">
+    $('#sessions').innerHTML = hits.length ? head + shown.map(r=>{ const s=sessById(r.sid); return `<div class="lrow igrid irow" role="link" tabindex="0" data-id="${r.id}">
         <span class="c-car">›</span><span class="c-date">${kst(r.ts)}</span>
-        <span class="c-opp"><b>${esc(r.opp)}</b>${typeTag(r)}</span>
+        <span class="c-opp">${crestImg(r.crest, r.opp)}<span class="oppt"><b>${esc(r.opp)}</b>${typeTag(r)}</span></span>
         <span class="c-score">${r.gf} : ${r.ga}</span>
         <span class="c-res"><span class="chip ${r.res}">${RK[r.res]}</span>${r.dnf?'<span class="chip dnf">DNF</span>':''}</span>
-        <span class="muted">${s?s.label:''}</span></div>`; }).join('')
+        <span class="muted">${s?s.label:''}</span></div>`; }).join('') + moreHits
       : `<div class="lrow" style="display:block;color:var(--muted)">"${esc(state.q)}" 와 일치하는 상대팀이 없습니다.</div>`;
+    const mh = $('#moreHits'); if(mh) mh.onclick = () => { state.hitShown += PAGE_SIZE*3; renderSessions(); };
     $('#sessions').querySelectorAll('.irow').forEach(el=>{ const go=()=>{ location.hash = `#/m/${el.dataset.id}`; }; el.onclick=go; el.onkeydown=e=>{if(e.target!==el) return; if(e.key==='Enter'||e.key===' '){e.preventDefault();go();}}; });
     return;
   }
   $('#qInfo').textContent = '';
   const head = `<div class="lrow lhead sgrid" role="row"><span></span><span>세션(KST)</span><span class="r">경기</span><span>전적</span><span class="r">득실</span><span>흐름 (최신 → 과거)</span></div>`;
-  const rows = sessions.map(s=>{
+  const selIdx = sessions.findIndex(s=>s.id===state.sid);
+  if(selIdx >= state.sessShown) state.sessShown = Math.ceil((selIdx+1)/PAGE_SIZE)*PAGE_SIZE;   // 선택한 세션은 항상 보이게
+  const visible = sessions.slice(0, state.sessShown);
+  const rows = visible.map(s=>{
     const on = s.id===state.sid;
     const form = (s.ms ? s.ms.map(m=>`<span class="chip ${m.res}" title="${esc(m.opp)} ${m.gf}:${m.ga}">${RK[m.res]}</span>`) : s.form.map(r=>`<span class="chip ${r}">${RK[r]}</span>`)).join('');
     const ttag = (s.types.playoff?`<span class="tag mute">플레이오프 ${s.types.playoff}</span>`:'') + (s.types.friendly?`<span class="tag mute">친선 ${s.types.friendly}</span>`:'');
     return `<div class="lrow sgrid srow ${on?'on':''}" role="link" tabindex="0" data-sid="${s.id}" ${on?'aria-current="true"':''}>
       <span class="c-car">${on?'●':'○'}</span>
-      <span class="c-date"><b>${s.label}</b>${s.live?`<span class="tag" tabindex="0" data-tip="수집 시점 기준 마지막 경기가 2시간 이내 — 경기가 더 추가될 수 있음">진행 중</span>`:''}${s.legacy?`<span class="tag mute" tabindex="0" data-tip="초기 수집본: 이벤트 36종만 기록(현재 61종). 일부 세부 지표가 '–'로 표시됩니다.">초기</span>`:''}${ttag}<small>${kt(s.start)} ~ ${kt(s.end)}</small></span>
+      <span class="c-date"><b>${s.label}</b>${isLive(s)?`<span class="tag" tabindex="0" data-tip="${LIVE_TIP}">진행 중</span>`:''}${s.legacy?`<span class="tag mute" tabindex="0" data-tip="초기 수집본: 이벤트 36종만 기록(현재 61종). 일부 세부 지표가 '–'로 표시됩니다.">초기</span>`:''}${ttag}<small>${kt(s.start)} ~ ${kt(s.end)}</small></span>
       <span class="c-n r">${s.n}</span>
       <span class="c-rec"><b>${s.w}승 ${s.d}무 ${s.l}패</b>${s.dnfN?`<span class="muted" style="font-size:12px"> · DNF ${s.dnfN}</span>`:''}</span>
       <span class="c-gd r">${s.gf} : ${s.ga} <span class="muted">(${sgn(s.gf-s.ga)})</span></span>
       <span class="c-form form">${form}</span>
     </div>`;
   }).join('');
-  $('#sessions').innerHTML = head + rows;
+  const more = sessions.length > visible.length
+    ? `<div class="more"><button type="button" id="moreSess">이전 세션 ${Math.min(PAGE_SIZE, sessions.length - visible.length)}개 더 보기 <span class="muted">(${sessions.length - visible.length}개 남음)</span></button></div>` : '';
+  $('#sessDesc').textContent = `한 세션 = 60분 안에 이어진 경기 묶음(보통 저녁 한 번). 세션을 누르면 위 요약·경기 이력이 그 세션으로 바뀝니다.`
+    + (sessions.length > visible.length ? ` 전체 ${sessions.length}세션 중 최근 ${visible.length}개를 표시합니다.` : '');
+  $('#sessions').innerHTML = head + rows + more;
+  const mb = $('#moreSess'); if(mb) mb.onclick = () => { state.sessShown += PAGE_SIZE; renderSessions(); };
   $('#sessions').querySelectorAll('.srow').forEach(el=>{
     const go=()=>{ location.hash = el.dataset.sid===sessions[0].id ? '#/' : `#/s/${el.dataset.sid}`; };
     el.onclick=go; el.onkeydown=e=>{if(e.target!==el) return; if(e.key==='Enter'||e.key===' '){e.preventDefault();go();}};
   });
 }
-$('#q').oninput = e => { state.q = e.target.value; renderSessions(); };
+$('#q').oninput = e => { state.q = e.target.value; state.hitShown = PAGE_SIZE*3; renderSessions(); };
+// '진행 중' 표시는 시간이 지나면 저절로 꺼져야 하므로 1분마다 다시 그린다 (라이브 상태가 바뀐 세션이 있을 때만)
+setInterval(() => {
+  if(!sessions.length) return;
+  const snap = liveSnap();
+  if(liveSnapshot !== null && snap !== liveSnapshot && !$('#home').hidden){ renderRecent(); renderSessions(); }
+  liveSnapshot = snap;
+}, 60000);
 
 /* ---------- player detail view ---------- */
 let hiddenN = 0;
@@ -717,7 +773,7 @@ function renderPlayer(mid, pid){
   const header = `
     <a class="back" href="#/m/${m.id}">← 경기 이력으로 <span class="muted">(${esc(sessOfMatch(m.id)?.label||'')} 세션)</span></a>
     <section class="card">
-      <div class="sub">${kst(m.ts)} (KST) · vs ${esc(m.opp)}${typeTag(m)}${m.oppSR!=null?` <span class="muted">(SR ${m.oppSR})</span>`:''} · <span class="chip ${m.res}">${RK[m.res]}</span> <b>${m.gf} : ${m.ga}</b>${m.dnf?`<span class="chip dnf" tabindex="0" data-tip="${esc(m.dnfNote)}">DNF</span>`:''}</div>
+      <div class="sub">${kst(m.ts)} (KST) · vs ${crestImg(m.crest, m.opp)}${esc(m.opp)}${typeTag(m)}${m.oppSR!=null?` <span class="muted">(SR ${m.oppSR})</span>`:''} · <span class="chip ${m.res}">${RK[m.res]}</span> <b>${m.gf} : ${m.ga}</b>${m.dnf?`<span class="chip dnf" tabindex="0" data-tip="${esc(m.dnfNote)}">DNF</span>`:''}</div>
       <div class="phead">
         <h2>${esc(p.name)}${p.mom?' <span class="muted" style="font-size:13px;font-weight:600">★ MOM</span>':''}</h2>
         <div class="pchips" aria-label="같은 경기 선수">${chips}</div>
@@ -797,7 +853,7 @@ const GROUPS = {
   def:{label:'수비', cols:[
     ['tm','태클 성공',null,0,'n'],['ta','태클 시도',null,0,'n'],['tR','태클 성공률',null,0,'r','%'],
     ['e6','인터셉트','event_6',0,'n'],['e158','상대 볼 뺏음','event_158',0,'n'],['pwin','볼 탈취','event_108+109+110',0,'n'],['plost','볼 상실','event_105+106+107',0,'n'],['e107','공격지역 상실','event_107',0,'n'],
-    ['e265','공중볼(공)','event_265',0,'n'],['e266','공중볼(수)','event_266',0,'n'],['foul','파울','event_2+3',0,'n'],['e4','피파울','event_4',0,'n'],['yc','경고','event_95+213',0,'n']]},
+    ['e265','공중볼(공)','event_265',0,'n'],['e266','공중볼(수)','event_266',0,'n'],['foul','파울','event_2+3',0,'n'],['e4','피파울','event_4',0,'n'],['yc','경고','event_95+213',0,'n'],['red','퇴장','경기별 redcards 필드 합',0,'n']]},
 };
 // 포지셔닝·판단(event_219/111/177/182)은 집계 표에서 제외 — 의미가 불분명한 피드백성 지표라 노출하지 않음(데이터는 원본에 보존).
 // 파생 컬럼이 의존하는 원시 키 (미기록 경기 수 표시용)
@@ -880,13 +936,38 @@ const renderAggA = aggWidget('#aggA', st => {
   return {P: Object.values(pre.players).map(finalizeAgg), n: pre.n, nLegacy, note: state.exDnf?' · <span class="muted">(누적 표는 빌드 시 집계되어 이탈 경기를 포함합니다)</span>':''};
 }, {
   describe: (st, n) => ({title:'선수별 스탯 집계 · 수집 누적', label: st.period==='last5' ? `최근 ${Math.min(5,sessions.length)}세션 (${n}경기)` : `수집 누적 (${RANGE()}, ${n}경기)`}) });
-function renderPlayers(){ renderAggS(); renderAggA(); }
+// EA members/stats: 시즌 전체(수집 전 경기 포함) 선수별 누적. 정의는 EA 기준이라 위 수집 집계와 직접 비교 불가.
+const SEASON_COLS = [
+  ['gp','경기',0,null], ['winRate','승률',0,'%'], ['g','골',0,null], ['a','도움',0,null], ['mom','MOM',0,null], ['rt','평균 평점',2,null],
+  ['passPct','패스 성공률',0,'%'], ['pm','패스 성공',0,null], ['shotPct','슈팅 성공률',0,'%'], ['tacklePct','태클 성공률',0,'%'], ['tm','태클 성공',0,null],
+  ['red','퇴장',0,null], ['csDef','클린시트(수비)',0,null], ['csGk','클린시트(GK)',0,null], ['ovr','OVR',0,null],
+];
+const seasonSt = {key:'gp', dir:-1};
+function renderSeason(){
+  const S = PLAYERS_PRE && PLAYERS_PRE.season; const card = $('#seasonCard');
+  if(!S || !S.players || !S.players.length){ card.hidden = true; return; }
+  card.hidden = false;
+  const rows = S.players.filter(r => (r.gp||0) > 0).slice();
+  rows.sort((x,y)=> seasonSt.key==='name' ? seasonSt.dir*x.name.localeCompare(y.name) : seasonSt.dir*(((x[seasonSt.key]??-1)) - ((y[seasonSt.key]??-1))));
+  const gpMax = Math.max(0, ...rows.map(r=>r.gp||0));
+  $('#seasonDesc').innerHTML = `EA <code>members/stats</code> 가 집계한 <b>현 시즌 전체</b> 값 (최다 ${gpMax}경기 · 수집 시작 전 경기 포함). 퇴장·승률·성공률은 EA 정의 그대로라 위 수집 집계와 기준이 다릅니다.${info('EA 서버의 선수별 시즌 누적. 이벤트 세부 지표는 없지만 경기 수·승률·골·도움·MOM·평점·패스/슈팅/태클 성공률·퇴장·클린시트가 있습니다. 패스 성공률은 오프사이드 패스를 차감하지 않은 EA 값입니다. 이름(게이머태그) 기준으로 연결합니다.')}`;
+  const arr=k=>seasonSt.key===k?`<span class="arr">${seasonSt.dir<0?'▼':'▲'}</span>`:'';
+  const head = `<thead><tr><th class="l sort" data-k="name">선수${arr('name')}</th><th class="l">포지션</th>` + SEASON_COLS.map(([k,l])=>`<th class="sort" data-k="${k}">${l}${arr(k)}</th>`).join('') + '</tr></thead>';
+  const body = rows.map(r=>`<tr><td class="l"><b>${esc(r.name)}</b></td><td class="l">${POS[r.pos]||r.pos||'–'}</td>` + SEASON_COLS.map(([k,l,d,u])=>{
+      const v = r[k]; const txt = v==null ? '–' : fmt(v,d) + (u||'');
+      if(u==='%' && v!=null) return `<td><div class="bar-in">${txt}<div class="minibar"><span style="width:${Math.min(100,v)}%"></span></div></div></td>`;
+      return `<td>${txt}</td>`;
+    }).join('') + '</tr>').join('');
+  $('#seasonT').innerHTML = head + '<tbody>' + body + '</tbody>';
+  $('#seasonT').querySelectorAll('th.sort').forEach(th=>th.onclick=()=>{ const k=th.dataset.k; if(seasonSt.key===k) seasonSt.dir*=-1; else { seasonSt.key=k; seasonSt.dir = k==='name'?1:-1; } renderSeason(); });
+}
+function renderPlayers(){ renderAggS(); renderAggA(); renderSeason(); }
 
 /* ---------- notes ---------- */
 function buildNotes(){ return [
-  `<b>자동 수집.</b> GitHub Actions가 KST 21~03시는 30분, 그 외 시간은 3시간 간격으로 EA API를 조회해 새 경기를 저장소에 쌓고 이 페이지를 다시 만듭니다. EA API는 매치타입당 최근 10경기만 돌려주므로, 한 수집 간격 안에 10경기 넘게 치르면 그 사이 경기는 영구히 누락됩니다(상단 ⓘ에 누락 건수 표시). 수집 시작(${FIRST_SEEN()}) 이전 경기는 없습니다.`,
+  `<b>자동 수집.</b> GitHub Actions가 KST 21~03시에만 20분 간격으로 EA API를 조회해(낮에는 수집하지 않음, 필요 시 수동 실행) 새 경기를 저장소에 쌓고 이 페이지를 다시 만듭니다. EA API는 매치타입당 최근 10경기만 돌려주므로, 한 수집 간격 안에 10경기 넘게 치르면 그 사이 경기는 영구히 누락됩니다(상단 ⓘ에 누락 건수 표시). 수집 시작(${FIRST_SEEN()}) 이전 경기는 없습니다.`,
   '<b>리그·플레이오프·친선</b> 경기를 모두 수집해 세션과 누적에 그대로 포함합니다. 리그가 아닌 경기는 상대팀 이름 뒤에 <span class="tag mute">플레이오프</span> / <span class="tag mute">친선</span> 태그가 붙습니다. 상단 시즌 누적은 EA가 집계한 리그 값입니다.',
-  '<b>세션</b> = 60분 안에 이어진 경기 묶음. 관측된 세션 내 최대 간격은 28분이었습니다. 세션 ID는 첫 경기 matchId라 뒤에 경기가 붙어도 바뀌지 않습니다. "진행 중"은 지금 시각 기준 마지막 경기가 2시간 이내인 세션입니다.',
+  '<b>세션</b> = 60분 안에 이어진 경기 묶음. 관측된 세션 내 최대 간격은 28분이었습니다. 세션 ID는 첫 경기 matchId라 뒤에 경기가 붙어도 바뀌지 않습니다. "진행 중"은 지금 시각 기준 마지막 경기가 1시간 이내인 세션이며, 1시간 동안 새 경기가 없으면 사라집니다.',
   '<b>초기 수집본(9/29~10/3, 20경기)</b>은 자동 수집 전에 수동으로 받은 스냅샷이라 이벤트 36종만 저장했습니다(현재 61종). 패스 실패의 방향·거리, 크로스, 빗나간 슈팅 위치, 태클 유형, 파울(event_3), 팀 경고·오프사이드가 없어 해당 항목은 "–" 또는 "n경기 제외"로 표시합니다. 90분당 값은 기록된 경기의 출전시간만으로 계산합니다.',
   '<b>시즌 누적</b>(상단)은 EA가 집계한 현 시즌 71경기 값이고, <b>수집 누적</b>(선수별 집계)은 수집 시작 이후 경기만입니다. 두 숫자는 범위가 달라 직접 비교할 수 없습니다.',
   '<b>최근 10경기만 조회됩니다.</b> <code>/clubs/matches</code>는 <code>maxResultCount</code>를 늘려도 10건만 반환합니다. 시즌 전체 세부 스탯은 소급할 수 없고 주기적으로 수집해 쌓아야 합니다.',
@@ -904,6 +985,8 @@ function buildNotes(){ return [
   '<b>태클 유형</b>: 스탠딩 성공(event_229) + 슬라이딩 성공(event_230)은 태클 성공 수와 대부분 일치합니다(출전 32건 중 30건). 실패 태클은 유형별로 나뉘지 않아 유형별 성공률은 계산할 수 없습니다.',
   '<b>오프사이드 걸림(event_104)</b>은 확정되지 않은 부분 매핑입니다(fc27-clubs-api 문서: "횟수가 자주 적게 잡힘"). 그래서 "참고" 표시를 붙였습니다. 오프사이드 패스(event_153, 확정)와는 다른 지표입니다.',
   '<b>이벤트 ID 해석은 커뮤니티 추정</b>입니다(eafc-pro-clubs-api-research README, 이를 따르는 fc27-clubs-api 문서와 대조 완료 — 두 문서는 같은 연구에 기반하므로 독립 검증은 아님). 골(event_214)·도움(event_11)·슈팅(event_217+218)은 이번 데이터 40건 모두 필드 값과 일치했습니다. 나머지는 EA 공식 정의가 아닙니다.',
+  '<b>시즌 선수 누적(EA 집계)</b>은 <code>members/stats</code> 응답을 수집 때마다 저장한 것입니다. 시즌 전체(수집 전 경기 포함)를 EA가 집계한 값이라 수집 집계와 범위·정의가 다릅니다. 예를 들어 EA 패스 성공률은 오프사이드 패스를 성공으로 셉니다. 선수 연결은 게이머태그 기준이라 이름을 바꾸면 끊어질 수 있습니다.',
+  '<b>상대팀 엠블럼</b>은 EA 콘텐츠 CDN 이미지를 그대로 불러옵니다(경기 응답의 <code>TEAM</code> → 커스텀 크레스트/실제 배지 순으로 시도). EA가 경로를 바꾸거나 이미지가 없으면 이니셜로 대체됩니다. 초기 수집본 경기는 상대 정보를 뒤늦게 보강하므로 일부는 이니셜로 남을 수 있습니다.',
   '<b>제공되지 않는 지표:</b> 실제 점유율, xG, 키패스, 활동량(뛴 거리), 경기 내 시간대별 이벤트.',
   '비공식 API이므로 응답 구조·필드가 예고 없이 바뀔 수 있습니다.',
 ]; }
@@ -933,9 +1016,14 @@ async function route(){
     const prevSid = state.sid; state.sid = sid;
     if(mp){
       $('#home').hidden=true; $('#homeCtl').hidden=true; $('#pview').hidden=false;
-      renderPlayer(mp[1], decodeURIComponent(mp[2])); window.scrollTo(0,0); return;
+      const wasPlayer = state.view === 'player'; const y = window.scrollY;
+      state.view = 'player';
+      renderPlayer(mp[1], decodeURIComponent(mp[2]));
+      if(wasPlayer) window.scrollTo(0, y); else window.scrollTo(0,0);   // 선수 칩·이전/다음 경기 이동은 현재 위치 유지
+      return;
     }
     $('#pview').hidden=true; $('#home').hidden=false; $('#homeCtl').hidden=false;
+    state.view = 'home';
     state.open = mm ? mm[1] : null;
     renderAll();
     if(mm){ const el=document.querySelector(`#matches .mrow[data-id="${mm[1]}"]`); if(el) el.scrollIntoView({block:'start'}); }

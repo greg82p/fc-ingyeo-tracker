@@ -62,6 +62,31 @@ def f(v, default=None):
         return default
 
 
+def crest_candidates(c: dict | None) -> list[int]:
+    """엠블럼 id 후보를 시도 순서대로. 규칙(fc27-clubs-api docs/assets.md): 경기의 TEAM 이 최우선,
+    없으면 selectedKitType 0 → 실제 배지(teamId) 먼저, 그 외 → 커스텀(crestAssetId) 먼저. 페이지는 앞에서부터 이미지를 시도한다."""
+    if not c:
+        return []
+    order = [c.get("team")]
+    order += [c.get("teamId"), c.get("crestAssetId")] if c.get("kitType") == 0 else [c.get("crestAssetId"), c.get("teamId")]
+    out: list[int] = []
+    for v in order:
+        try:
+            n = int(v) if v is not None else 0
+        except (TypeError, ValueError):
+            n = 0
+        if n > 0 and n not in out:
+            out.append(n)
+    return out
+
+
+def crest_from_club(club: dict) -> dict:
+    d = club.get("details") or {}
+    kit = d.get("customKit") or {}
+    return {"team": i(club.get("TEAM"), 0) or None, "teamId": i(d.get("teamId"), 0) or None,
+            "crestAssetId": i(kit.get("crestAssetId"), 0) or None, "kitType": i(kit.get("selectedKitType"), -1)}
+
+
 # ---------- 정규화: 두 원본 포맷 → 공통 Match ----------
 def parse_events(p: dict) -> dict[str, int]:
     ev: dict[str, int] = {}
@@ -111,6 +136,7 @@ def normalize_ea(rec: dict) -> dict:
         "us": team_from_ea(agg.get(str(CLUB_ID)) or {}, our_players),
         "them": team_from_ea(agg.get(opp_id) or {}, opp_players),
         "evIds": EV_FULL, "imported": False, "players": our_players,
+        "oppCrest": crest_from_club(opp) if opp else None,
     }
 
 
@@ -125,7 +151,7 @@ def normalize_legacy(rec: dict) -> dict:
     return {"id": str(m["id"]), "ts": i(m["ts"]), "type": TYPE.get(rec.get("matchType"), "league"),
             "opp": m["opp"], "oppId": str(m["oppId"]), "gf": i(m["gf"]), "ga": i(m["ga"]), "code": i(m["code"]),
             "dnfFlag": i(m.get("dnfFlag")), "oppN": i(m.get("oppN")), "us": m["us"], "them": m["them"],
-            "evIds": rec["evIds"], "imported": True, "players": players}
+            "evIds": rec["evIds"], "imported": True, "players": players, "oppCrest": None}
 
 
 # ---------- 지표 v2 (페이지 JS 와 1:1) ----------
@@ -149,6 +175,9 @@ def enrich(m: dict, opponents: dict) -> dict:
     m["evN"] = len(m["evIds"])
     m["legacy"] = len(m["evIds"]) < len(EV_FULL)                 # 일부 이벤트만 기록된 경기(초기 스냅샷 20경기)
     m["evMissing"] = sorted(int(e) for e in EV_FULL if str(e) not in ev_set)   # 이 경기에 기록되지 않은 이벤트
+    if not m.get("oppCrest") and o.get("crest"):
+        m["oppCrest"] = o["crest"]                                   # 초기 임포트 경기: opponents.json 의 보강값
+    m["crest"] = crest_candidates(m.get("oppCrest"))                 # 페이지가 쓰는 엠블럼 id 후보 (빈 리스트면 플레이스홀더)
     return m
 
 
@@ -206,7 +235,7 @@ def aggregate_players(matches: list[dict]) -> dict:
 
 def match_public(m: dict) -> dict:
     """세션 파일에 넣는 경기 객체 (내부 전용 필드 제거)."""
-    out = {k: v for k, v in m.items() if k not in ("evIds", "evMissing")}
+    out = {k: v for k, v in m.items() if k not in ("evIds", "evMissing", "oppCrest")}
     out["evMissing"] = m["evMissing"] if m["legacy"] else []
     out["players"] = [{k: v for k, v in p.items() if k != "played"} for p in m["players"]]
     return out
@@ -215,6 +244,7 @@ def match_public(m: dict) -> dict:
 def main() -> int:
     state = load_json(META_DIR / "state.json", {})
     opponents = load_json(META_DIR / "opponents.json", {})
+    members = load_json(META_DIR / "members.json", None)
     gaps = load_json(META_DIR / "gaps.json", [])
 
     by_id: dict[str, dict] = {}
@@ -242,11 +272,21 @@ def main() -> int:
         dump(OUT_DIR / "sessions" / f"{s['id']}.json", {"id": s["id"], "matches": [match_public(m) for m in s["matches"]]})
     dump(OUT_DIR / "sessions.json", [{k: v for k, v in s.items() if k != "matches"} for s in sessions])
     dump(OUT_DIR / "matches.json", [[m["id"], m["ts"], m["type"], m["opp"], m["oppId"], m["gf"], m["ga"], m["res"],
-                                     1 if m["dnf"] else 0, m["sid"]] for m in matches_desc])
+                                     1 if m["dnf"] else 0, m["sid"], m["crest"]] for m in matches_desc])
     last5 = [m for s in sessions[:LAST_N_SESSIONS] for m in s["matches"]]
+    # 이름 → playerId (members/stats 에는 ID 가 없어 이름으로 연결. 최신 경기의 이름이 우선)
+    name_to_id: dict[str, str] = dict(NAME_TO_ID)
+    for m in sorted(matches, key=lambda x: x["ts"]):
+        for p in m["players"]:
+            name_to_id[p["name"]] = p["id"]
+    season = None
+    if members and members.get("members"):
+        season = {"source": members.get("source", "members/stats"), "players": [
+            {**row, "id": name_to_id.get(row["name"], f"name:{row['name']}")} for row in members["members"]]}
     dump(OUT_DIR / "players.json", {
         "all": {"n": len(matches), "from": matches_desc[-1]["ts"], "to": matches_desc[0]["ts"], "players": aggregate_players(matches)},
         "last5": {"n": len(last5), "sessions": min(LAST_N_SESSIONS, len(sessions)), "players": aggregate_players(last5)},
+        "season": season,
     })
     # meta.json 에는 시각을 넣지 않는다 — 데이터가 같으면 바이트까지 같아야 "변경 없으면 커밋 없음"이 성립한다.
     # dataHash 는 다른 산출물 내용의 해시: 페이지가 캐시 버스팅(?v=)에 쓴다.
@@ -255,7 +295,7 @@ def main() -> int:
         h.update(path.relative_to(OUT_DIR).as_posix().encode()); h.update(path.read_bytes())
     dump(OUT_DIR / "meta.json", {
         "dataHash": h.hexdigest()[:12], "metricsVersion": METRICS_VERSION, "clubId": CLUB_ID,
-        "club": state.get("club") or {},
+        "club": state.get("club") or {}, "clubCrest": crest_candidates((state.get("club") or {}).get("crest")),
         "consecutiveFailures": state.get("consecutiveFailures", 0), "lastError": state.get("lastError"),
         "counts": {"matches": len(matches), "sessions": len(sessions), "imported": n_legacy, "raw": len(matches) - n_legacy,
                    "legacy": sum(1 for m in matches if m["legacy"])},

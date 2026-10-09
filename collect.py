@@ -40,6 +40,8 @@ META_DIR = ROOT / "meta"
 STATE_PATH = META_DIR / "state.json"
 OPP_PATH = META_DIR / "opponents.json"
 GAPS_PATH = META_DIR / "gaps.json"
+MEMBERS_PATH = META_DIR / "members.json"   # EA members/stats (선수별 시즌 누적, EA 집계)
+CREST_BACKFILL_PER_RUN = 5                 # 엠블럼 정보가 없는 기존 상대를 실행당 몇 클럽까지 clubs/info 로 보강할지
 
 HEADERS = {
     "accept": "application/json",
@@ -135,6 +137,15 @@ def mask_opponents(match: dict) -> dict:
     return match
 
 
+def crest_of(club: dict) -> dict:
+    """clubs[id] (matches) 또는 clubs/info 항목에서 엠블럼 후보 id. TEAM(경기에서 실제 쓴 크레스트) > crestAssetId/teamId.
+    규칙 출처: fc27-clubs-api docs/assets.md (selectedKitType 1 = 커스텀 크레스트, 0 = 실제 팀 배지)."""
+    d = club.get("details") or club
+    kit = d.get("customKit") or {}
+    return {"team": _int_or_none(club.get("TEAM")), "teamId": _int_or_none(d.get("teamId")),
+            "crestAssetId": _int_or_none(kit.get("crestAssetId")), "kitType": _int_or_none(kit.get("selectedKitType"))}
+
+
 # ---------- 수집 ----------
 def collect_matches(state: dict) -> tuple[dict[str, int], list[dict]]:
     """세 타입 조회 → 새 파일 저장. (타입별 새 경기 수, 새 경기 요약 리스트)"""
@@ -157,10 +168,13 @@ def collect_matches(state: dict) -> tuple[dict[str, int], list[dict]]:
             save_json(path, rec, compact=True)
             n += 1
             opp = next((c for cid, c in m["clubs"].items() if str(cid) != str(CLUB_ID)), None)
+            ours = m["clubs"].get(str(CLUB_ID)) or {}
             new_matches.append({
                 "id": mid, "type": mt, "ts": int(m["timestamp"]),
                 "oppId": str(opp["details"]["clubId"]) if opp and opp.get("details") else None,
                 "oppName": (opp.get("details") or {}).get("name") if opp else None,
+                "oppCrest": crest_of(opp) if opp else None,
+                "ourCrest": crest_of(ours) if ours else None,
             })
         new_counts[mt] = n
         log(f"  {mt}: {len(data)} returned, {n} new")
@@ -168,7 +182,7 @@ def collect_matches(state: dict) -> tuple[dict[str, int], list[dict]]:
     return new_counts, new_matches
 
 
-def fetch_club_summary(state: dict, changed: bool = False) -> dict:
+def fetch_club_summary(state: dict, changed: bool = False, our_crest: dict | None = None) -> dict:
     """overallStats(+ 현재 시즌 리더보드)로 시즌 누적 갱신. 실패해도 수집은 성공으로 본다.
     값이 하나라도 바뀌었을 때만 updatedAt 을 갱신한다 (그래야 변경 없는 실행에서 state.json 이 안 바뀜)."""
     prev = dict(state.get("club") or {})
@@ -195,6 +209,10 @@ def fetch_club_summary(state: dict, changed: bool = False) -> dict:
                 "div": _int_or_none(row.get("currentDivision")), "pts": int(row.get("points") or 0),
                 "cs": int(row.get("cleanSheets") or 0), "team": (row.get("clubInfo") or {}).get("teamId"),
             })
+            # 엠블럼: 리더보드 clubInfo 값을 기본으로, 비어 있는 항목은 최신 경기(TEAM 포함)·이전 값 순으로 채운다
+            info_crest = crest_of({"details": row.get("clubInfo") or {}})
+            fallback = {**(club.get("crest") or {}), **{k: v for k, v in (our_crest or {}).items() if v is not None}}
+            club["crest"] = {k: (info_crest.get(k) if info_crest.get(k) is not None else fallback.get(k)) for k in ("team", "teamId", "crestAssetId", "kitType")}
             if club.get("best") is None:                       # overallStats 의 bestDivision 은 null 로 오는 경우가 있음 (실측 2026-10-09)
                 club["best"] = _int_or_none(row.get("bestDivision"))
     except ApiError as e:
@@ -227,25 +245,85 @@ def record_gap(state: dict, club: dict, new_counts: dict[str, int], gaps: list) 
 
 
 def update_opponents(new_matches: list[dict], opponents: dict) -> None:
-    """새 상대 클럽만 overallStats 1건씩 조회해 첫 관측 SR 저장."""
+    """새 상대 클럽은 overallStats 1건씩 조회해 첫 관측 SR 저장. 엠블럼 정보는 경기 응답에서 바로 저장(추가 요청 없음)."""
     seen = set()
     for nm in new_matches:
         oid = nm.get("oppId")
-        if not oid or oid in opponents or oid in seen:
+        if not oid:
+            continue
+        if oid in opponents:
+            if nm.get("oppCrest") and not opponents[oid].get("crest"):
+                opponents[oid]["crest"] = nm["oppCrest"]              # 초기 임포트 상대: 다시 만나면 엠블럼 채움
+            continue
+        if oid in seen:
             continue
         seen.add(oid)
+        entry = {"name": nm.get("oppName"), "sr": None, "gp": None, "seenAt": now_iso(), "firstMatchId": nm["id"],
+                 "crest": nm.get("oppCrest")}
         try:
             ov = get_json("clubs/overallStats", clubIds=oid)
             row = ov[0] if isinstance(ov, list) and ov else {}
-            opponents[oid] = {
-                "name": nm.get("oppName"), "sr": _int_or_none(row.get("skillRating")),
-                "gp": _int_or_none(row.get("gamesPlayed")), "seenAt": now_iso(), "firstMatchId": nm["id"],
-            }
+            entry.update({"sr": _int_or_none(row.get("skillRating")), "gp": _int_or_none(row.get("gamesPlayed"))})
         except ApiError as e:
             log(f"  opponent {oid} SR failed (non-fatal): {e}")
-            opponents[oid] = {"name": nm.get("oppName"), "sr": None, "gp": None, "seenAt": now_iso(),
-                              "firstMatchId": nm["id"], "error": str(e)[:80]}
+            entry["error"] = str(e)[:80]
+        opponents[oid] = entry
         time.sleep(1)
+
+
+def backfill_crests(opponents: dict, limit: int = CREST_BACKFILL_PER_RUN) -> int:
+    """엠블럼 정보가 없는 기존 상대(초기 임포트분)를 실행당 limit 개까지 clubs/info 로 채운다. 실패해도 무시."""
+    todo = [oid for oid, o in opponents.items() if not o.get("crest")][:limit]
+    done = 0
+    for oid in todo:
+        try:
+            info = get_json("clubs/info", clubIds=oid)
+            row = info.get(str(oid)) if isinstance(info, dict) else None
+            if row:
+                opponents[oid]["crest"] = crest_of({"details": row})
+                opponents[oid].setdefault("name", row.get("name"))
+                done += 1
+        except ApiError as e:
+            log(f"  clubs/info {oid} failed (non-fatal): {e}")
+        time.sleep(1)
+    if todo:
+        log(f"  crest backfill: {done}/{len(todo)} (remaining {sum(1 for o in opponents.values() if not o.get('crest'))})")
+    return done
+
+
+MEMBER_FIELDS = {  # EA members/stats → 저장 키 (시즌 누적, EA 집계값 그대로)
+    "gamesPlayed": "gp", "winRate": "winRate", "goals": "g", "assists": "a", "cleanSheetsDef": "csDef", "cleanSheetsGK": "csGk",
+    "shotSuccessRate": "shotPct", "passesMade": "pm", "passSuccessRate": "passPct", "ratingAve": "rt",
+    "tacklesMade": "tm", "tackleSuccessRate": "tacklePct", "manOfTheMatch": "mom", "redCards": "red",
+    "proOverall": "ovr", "favoritePosition": "pos", "proName": "proName",
+}
+
+
+def fetch_members(prev: dict | None) -> dict | None:
+    """members/stats → 선수별 시즌 누적(EA 집계). 값이 안 바뀌면 이전 내용을 그대로 돌려 파일 변경이 없게 한다."""
+    try:
+        data = get_json("members/stats", clubId=CLUB_ID)
+    except ApiError as e:
+        log(f"  members/stats failed (non-fatal): {e}")
+        return prev
+    members = []
+    for m in (data.get("members") or []) if isinstance(data, dict) else []:
+        row = {"name": m.get("name", "")}
+        for src, dst in MEMBER_FIELDS.items():
+            v = m.get(src)
+            if dst in ("rt",):
+                row[dst] = float(v) if v not in (None, "") else None
+            elif dst in ("pos", "proName"):
+                row[dst] = v or ""
+            else:
+                row[dst] = _int_or_none(v)
+        members.append(row)
+    members.sort(key=lambda r: r["name"].lower())
+    if not members and prev:
+        log("  members/stats returned no members; keeping previous file")
+        return prev
+    out = {"source": "members/stats", "members": members}
+    return prev if prev and prev.get("members") == members else out
 
 
 def write_summary(lines: list[str]) -> None:
@@ -278,9 +356,12 @@ def main() -> int:
             return 1
         return 0
 
-    club = fetch_club_summary(state, changed=bool(new_matches))
+    our_crest = next((nm["ourCrest"] for nm in sorted(new_matches, key=lambda x: -x["ts"]) if nm.get("ourCrest")), None)
+    club = fetch_club_summary(state, changed=bool(new_matches), our_crest=our_crest)
     record_gap(state, club, new_counts, gaps)
     update_opponents(new_matches, opponents)
+    backfill_crests(opponents)
+    members = fetch_members(load_json(MEMBERS_PATH, None))
 
     total_new = sum(new_counts.values())
     state.update({"consecutiveFailures": 0, "club": club, "rawCount": len(list(RAW_DIR.glob("*.json")))})
@@ -288,6 +369,8 @@ def main() -> int:
     save_json(STATE_PATH, state)
     save_json(OPP_PATH, opponents)
     save_json(GAPS_PATH, gaps)
+    if members:
+        save_json(MEMBERS_PATH, members)
 
     # 워크플로가 읽는 출력: 새 경기가 있었는지
     out = os.environ.get("GITHUB_OUTPUT")

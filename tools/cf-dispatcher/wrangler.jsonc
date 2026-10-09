@@ -1,0 +1,13 @@
+{
+  // Cloudflare Worker: GitHub 스케줄러를 거치지 않고 Cloudflare Cron 으로 collect 워크플로를 깨운다.
+  // 배포: cd tools/cf-dispatcher && npx wrangler login && npx wrangler secret put GITHUB_TOKEN && npx wrangler deploy
+  // GITHUB_TOKEN = fine-grained PAT (저장소: fc-ingyeo-tracker 만, 권한: Actions → Read and write). 코드·채팅에 절대 넣지 말 것.
+  "name": "fc-ingyeo-dispatcher",
+  "main": "src/index.js",
+  "compatibility_date": "2026-10-10",
+  "vars": { "GH_OWNER": "greg82p", "GH_REPO": "fc-ingyeo-tracker", "GH_WORKFLOW": "collect.yml", "GH_REF": "main" },
+  "triggers": {
+    // UTC. GitHub 쪽 cron 과 동일한 슬롯: KST 21:03~02:43 20분 간격 + 03:03 마감 (Free 플랜 cron 한도: 계정당 5개)
+    "crons": ["3,23,43 12-17 * * *", "3 18 * * *"]
+  }
+}
