@@ -14,10 +14,16 @@
   "sr": 1422,
   "cs": 38,
   "team": 2055,
-  "updatedAt": "2026-10-09T17:40:19Z",
+  "updatedAt": "2026-10-09T18:34:39Z",
   "gpPlayoff": 0,
   "wstreak": 1,
-  "unbeaten": 1
+  "unbeaten": 1,
+  "crest": {
+   "team": null,
+   "teamId": 2055,
+   "crestAssetId": 99160104,
+   "kitType": 0
+  }
  },
  "rawCount": 24
 }

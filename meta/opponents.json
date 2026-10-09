@@ -5,7 +5,13 @@
   "gp": 39,
   "seenAt": "2026-10-07 00:37 KST",
   "firstMatchId": null,
-  "source": "legacy"
+  "source": "legacy",
+  "crest": {
+   "team": null,
+   "teamId": 241,
+   "crestAssetId": 99160714,
+   "kitType": 0
+  }
  },
  "737854": {
   "name": "FC Gekilow",
@@ -13,7 +19,13 @@
   "gp": 58,
   "seenAt": "2026-10-07 00:37 KST",
   "firstMatchId": null,
-  "source": "legacy"
+  "source": "legacy",
+  "crest": {
+   "team": null,
+   "teamId": 11,
+   "crestAssetId": 99160221,
+   "kitType": 0
+  }
  },
  "5297": {
   "name": "SC Emslada",
@@ -21,7 +33,13 @@
   "gp": 129,
   "seenAt": "2026-10-07 00:37 KST",
   "firstMatchId": null,
-  "source": "legacy"
+  "source": "legacy",
+  "crest": {
+   "team": null,
+   "teamId": 73,
+   "crestAssetId": 99160815,
+   "kitType": 1
+  }
  },
  "5369": {
   "name": "FC YASACELONA",
@@ -29,7 +47,13 @@
   "gp": 67,
   "seenAt": "2026-10-07 00:37 KST",
   "firstMatchId": null,
-  "source": "legacy"
+  "source": "legacy",
+  "crest": {
+   "team": null,
+   "teamId": 1745,
+   "crestAssetId": 99130106,
+   "kitType": 1
+  }
  },
  "762435": {
   "name": "Barbados fc246",
@@ -37,7 +61,13 @@
   "gp": 5,
   "seenAt": "2026-10-07 00:37 KST",
   "firstMatchId": null,
-  "source": "legacy"
+  "source": "legacy",
+  "crest": {
+   "team": null,
+   "teamId": 241,
+   "crestAssetId": 99161114,
+   "kitType": 0
+  }
  },
  "587945": {
   "name": "YAMAKAYO FC",
