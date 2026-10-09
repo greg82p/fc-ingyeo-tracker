@@ -1,1 +1,8 @@
-[]
+[
+ {
+  "detectedAt": "2026-10-09T13:45:35Z",
+  "missedLeagueMatches": 3,
+  "gamesPlayedBefore": 71,
+  "gamesPlayedAfter": 84
+ }
+]
