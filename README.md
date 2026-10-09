@@ -27,7 +27,7 @@ tools/                legacy_import.py, selftest.py(가짜 API로 수집기 점�
 4. **첫 배포** — Actions 탭 → `pages` → Run workflow. 1~2분 뒤 `https://<계정>.github.io/fc-ingyeo-tracker/` 가 열린다.
    이 시점 데이터는 임포트한 39경기뿐이고 상단에 "마지막 수집 기록 없음"이 뜬다.
 5. **첫 수집** — Actions 탭 → `collect` → Run workflow. 첫 실행은 시즌 누적을 EA 값으로 갱신하므로 커밋이 한 번 생기고,
-   이후는 스케줄대로 KST 21~03시 30분, 그 외 3시간 간격으로 돌며 **새 경기가 있을 때만** 커밋·배포한다.
+   이후는 스케줄대로 KST 22:00~02:30 20분, 그 외 3시간 간격으로 돌며 **새 경기가 있을 때만** 커밋·배포한다.
    페이지 상단의 "마지막 수집" 시각은 저장소가 아니라 GitHub Actions 실행 기록(공개 API)에서 읽으므로 커밋이 없어도 갱신된다.
 
 ## 운영
