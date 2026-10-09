@@ -195,6 +195,8 @@ def fetch_club_summary(state: dict, changed: bool = False) -> dict:
                 "div": _int_or_none(row.get("currentDivision")), "pts": int(row.get("points") or 0),
                 "cs": int(row.get("cleanSheets") or 0), "team": (row.get("clubInfo") or {}).get("teamId"),
             })
+            if club.get("best") is None:                       # overallStats 의 bestDivision 은 null 로 오는 경우가 있음 (실측 2026-10-09)
+                club["best"] = _int_or_none(row.get("bestDivision"))
     except ApiError as e:
         log(f"  leaderboard search failed (non-fatal): {e}")
     if {k: v for k, v in club.items() if k != "updatedAt"} != {k: v for k, v in prev.items() if k != "updatedAt"} or changed:
@@ -300,3 +302,4 @@ def main() -> int:
 
 if __name__ == "__main__":
     sys.exit(main())
+
