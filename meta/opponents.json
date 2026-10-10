@@ -251,7 +251,9 @@
    "teamId": 1,
    "crestAssetId": 99160927,
    "kitType": 1
-  }
+  },
+  "div": 5,
+  "divAt": "2026-10-10T21:13:03Z"
  },
  "656163": {
   "name": "FCdory",
@@ -265,7 +267,9 @@
    "teamId": 9,
    "crestAssetId": 99160420,
    "kitType": 0
-  }
+  },
+  "div": 6,
+  "divAt": "2026-10-10T21:13:05Z"
  },
  "1162391": {
   "name": "Till in Tsurum",
@@ -279,7 +283,9 @@
    "teamId": 3,
    "crestAssetId": 99160406,
    "kitType": 1
-  }
+  },
+  "div": 5,
+  "divAt": "2026-10-10T21:13:07Z"
  },
  "10587": {
   "name": "Saikyo Boys",
@@ -292,7 +298,9 @@
    "teamId": 1799,
    "crestAssetId": 99160607,
    "kitType": 0
-  }
+  },
+  "div": 3,
+  "divAt": "2026-10-10T21:13:09Z"
  },
  "903685": {
   "name": "Hot Bro Return",
@@ -305,42 +313,74 @@
    "teamId": 1318,
    "crestAssetId": 99160505,
    "kitType": 0
-  }
+  },
+  "div": 5,
+  "divAt": "2026-10-10T21:13:11Z"
  },
  "6084": {
   "name": "PIYO FC",
   "sr": 1386,
   "gp": 117,
   "seenAt": "2026-10-09T13:45:40Z",
-  "firstMatchId": "80492064930001"
+  "firstMatchId": "80492064930001",
+  "crest": {
+   "team": null,
+   "teamId": 9,
+   "crestAssetId": 99160904,
+   "kitType": 0
+  }
  },
  "120317": {
   "name": "BointedMuramura",
   "sr": 1427,
   "gp": 23,
   "seenAt": "2026-10-09T13:45:42Z",
-  "firstMatchId": "80142710370472"
+  "firstMatchId": "80142710370472",
+  "crest": {
+   "team": null,
+   "teamId": 9,
+   "crestAssetId": 99160418,
+   "kitType": 0
+  }
  },
  "76963": {
   "name": "Chiba FC",
   "sr": 1505,
   "gp": 67,
   "seenAt": "2026-10-09T13:45:44Z",
-  "firstMatchId": "80322103230286"
+  "firstMatchId": "80322103230286",
+  "crest": {
+   "team": null,
+   "teamId": 1,
+   "crestAssetId": 99160317,
+   "kitType": 0
+  }
  },
  "816198": {
   "name": "GBMN JP",
   "sr": 1417,
   "gp": 89,
   "seenAt": "2026-10-09T13:45:46Z",
-  "firstMatchId": "80034688670291"
+  "firstMatchId": "80034688670291",
+  "crest": {
+   "team": null,
+   "teamId": 1,
+   "crestAssetId": 99160825,
+   "kitType": 0
+  }
  },
  "87333": {
   "name": "BONSAI FC",
   "sr": 1517,
   "gp": 87,
   "seenAt": "2026-10-09T13:45:48Z",
-  "firstMatchId": "79992622590412"
+  "firstMatchId": "79992622590412",
+  "crest": {
+   "team": null,
+   "teamId": 243,
+   "crestAssetId": 99161118,
+   "kitType": 0
+  }
  },
  "5467": {
   "name": "IKUNO future fc",
