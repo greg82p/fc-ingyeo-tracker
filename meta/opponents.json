@@ -91,7 +91,9 @@
    "teamId": 10,
    "crestAssetId": 99161021,
    "kitType": 1
-  }
+  },
+  "div": 4,
+  "divAt": "2026-10-10T16:59:48Z"
  },
  "662335": {
   "name": "FC PEGASUS 2027",
@@ -105,7 +107,9 @@
    "teamId": 1,
    "crestAssetId": 99160927,
    "kitType": 0
-  }
+  },
+  "div": 4,
+  "divAt": "2026-10-10T16:59:50Z"
  },
  "5437": {
   "name": "ac salesio",
@@ -119,7 +123,9 @@
    "teamId": 106,
    "crestAssetId": 99160621,
    "kitType": 0
-  }
+  },
+  "div": 3,
+  "divAt": "2026-10-10T16:59:52Z"
  },
  "1243046": {
   "name": "ADHDs",
@@ -133,7 +139,9 @@
    "teamId": 10,
    "crestAssetId": 99160312,
    "kitType": 0
-  }
+  },
+  "div": 6,
+  "divAt": "2026-10-10T16:59:55Z"
  },
  "770745": {
   "name": "Mobbies",
@@ -147,7 +155,9 @@
    "teamId": 131682,
    "crestAssetId": 99160128,
    "kitType": 0
-  }
+  },
+  "div": 3,
+  "divAt": "2026-10-10T16:59:57Z"
  },
  "97706": {
   "name": "fc dark horse",
@@ -155,7 +165,13 @@
   "gp": 119,
   "seenAt": "2026-10-08 01:08 KST",
   "firstMatchId": null,
-  "source": "legacy"
+  "source": "legacy",
+  "crest": {
+   "team": null,
+   "teamId": 22,
+   "crestAssetId": 99160415,
+   "kitType": 0
+  }
  },
  "275399": {
   "name": "I LOVE UBI",
@@ -163,7 +179,13 @@
   "gp": 75,
   "seenAt": "2026-10-08 01:08 KST",
   "firstMatchId": null,
-  "source": "legacy"
+  "source": "legacy",
+  "crest": {
+   "team": null,
+   "teamId": 10,
+   "crestAssetId": 99160718,
+   "kitType": 0
+  }
  },
  "496884": {
   "name": "NGOOOOO",
@@ -171,7 +193,13 @@
   "gp": 6,
   "seenAt": "2026-10-08 01:08 KST",
   "firstMatchId": null,
-  "source": "legacy"
+  "source": "legacy",
+  "crest": {
+   "team": null,
+   "teamId": 241,
+   "crestAssetId": 99161117,
+   "kitType": 0
+  }
  },
  "632201": {
   "name": "ashiyafc",
@@ -179,7 +207,13 @@
   "gp": 55,
   "seenAt": "2026-10-08 01:08 KST",
   "firstMatchId": null,
-  "source": "legacy"
+  "source": "legacy",
+  "crest": {
+   "team": null,
+   "teamId": 1824,
+   "crestAssetId": 99030109,
+   "kitType": 1
+  }
  },
  "634250": {
   "name": "FC Baçaa",
@@ -187,7 +221,13 @@
   "gp": 67,
   "seenAt": "2026-10-08 01:08 KST",
   "firstMatchId": null,
-  "source": "legacy"
+  "source": "legacy",
+  "crest": {
+   "team": null,
+   "teamId": 241,
+   "crestAssetId": 99110416,
+   "kitType": 0
+  }
  },
  "646529": {
   "name": "PAPICO GX",
