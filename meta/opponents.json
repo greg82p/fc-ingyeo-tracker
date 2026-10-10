@@ -171,7 +171,9 @@
    "teamId": 22,
    "crestAssetId": 99160415,
    "kitType": 0
-  }
+  },
+  "div": 4,
+  "divAt": "2026-10-10T20:31:02Z"
  },
  "275399": {
   "name": "I LOVE UBI",
@@ -185,7 +187,9 @@
    "teamId": 10,
    "crestAssetId": 99160718,
    "kitType": 0
-  }
+  },
+  "div": 3,
+  "divAt": "2026-10-10T20:31:04Z"
  },
  "496884": {
   "name": "NGOOOOO",
@@ -199,7 +203,9 @@
    "teamId": 241,
    "crestAssetId": 99161117,
    "kitType": 0
-  }
+  },
+  "div": 5,
+  "divAt": "2026-10-10T20:31:06Z"
  },
  "632201": {
   "name": "ashiyafc",
@@ -213,7 +219,9 @@
    "teamId": 1824,
    "crestAssetId": 99030109,
    "kitType": 1
-  }
+  },
+  "div": 4,
+  "divAt": "2026-10-10T20:31:08Z"
  },
  "634250": {
   "name": "FC Baçaa",
@@ -227,7 +235,9 @@
    "teamId": 241,
    "crestAssetId": 99110416,
    "kitType": 0
-  }
+  },
+  "div": 5,
+  "divAt": "2026-10-10T20:31:10Z"
  },
  "646529": {
   "name": "PAPICO GX",
@@ -235,7 +245,13 @@
   "gp": 37,
   "seenAt": "2026-10-08 01:08 KST",
   "firstMatchId": null,
-  "source": "legacy"
+  "source": "legacy",
+  "crest": {
+   "team": null,
+   "teamId": 1,
+   "crestAssetId": 99160927,
+   "kitType": 1
+  }
  },
  "656163": {
   "name": "FCdory",
@@ -243,7 +259,13 @@
   "gp": 44,
   "seenAt": "2026-10-08 01:08 KST",
   "firstMatchId": null,
-  "source": "legacy"
+  "source": "legacy",
+  "crest": {
+   "team": null,
+   "teamId": 9,
+   "crestAssetId": 99160420,
+   "kitType": 0
+  }
  },
  "1162391": {
   "name": "Till in Tsurum",
@@ -251,21 +273,39 @@
   "gp": 26,
   "seenAt": "2026-10-08 01:08 KST",
   "firstMatchId": null,
-  "source": "legacy"
+  "source": "legacy",
+  "crest": {
+   "team": null,
+   "teamId": 3,
+   "crestAssetId": 99160406,
+   "kitType": 1
+  }
  },
  "10587": {
   "name": "Saikyo Boys",
   "sr": 1459,
   "gp": 153,
   "seenAt": "2026-10-09T13:45:36Z",
-  "firstMatchId": "83188314590481"
+  "firstMatchId": "83188314590481",
+  "crest": {
+   "team": null,
+   "teamId": 1799,
+   "crestAssetId": 99160607,
+   "kitType": 0
+  }
  },
  "903685": {
   "name": "Hot Bro Return",
   "sr": 1333,
   "gp": 34,
   "seenAt": "2026-10-09T13:45:38Z",
-  "firstMatchId": "80204959640457"
+  "firstMatchId": "80204959640457",
+  "crest": {
+   "team": null,
+   "teamId": 1318,
+   "crestAssetId": 99160505,
+   "kitType": 0
+  }
  },
  "6084": {
   "name": "PIYO FC",
