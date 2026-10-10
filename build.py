@@ -172,6 +172,7 @@ def enrich(m: dict, opponents: dict) -> dict:
     m["nPlayed"] = sum(1 for p in m["players"] if p["played"])
     o = opponents.get(str(m["oppId"])) or {}
     m["oppSR"] = {"sr": o.get("sr"), "gp": o.get("gp")} if o.get("sr") is not None else None
+    m["oppDiv"] = o.get("div")                                       # 상대 디비전 (수집기가 리더보드에서 조회한 최근 관측값, 없으면 None)
     m["evN"] = len(m["evIds"])
     m["legacy"] = len(m["evIds"]) < len(EV_FULL)                 # 일부 이벤트만 기록된 경기(초기 스냅샷 20경기)
     m["evMissing"] = sorted(int(e) for e in EV_FULL if str(e) not in ev_set)   # 이 경기에 기록되지 않은 이벤트
@@ -245,6 +246,7 @@ def main() -> int:
     state = load_json(META_DIR / "state.json", {})
     opponents = load_json(META_DIR / "opponents.json", {})
     members = load_json(META_DIR / "members.json", None)
+    history = load_json(META_DIR / "club_history.json", [])
     gaps = load_json(META_DIR / "gaps.json", [])
 
     by_id: dict[str, dict] = {}
@@ -271,8 +273,12 @@ def main() -> int:
     for s in sessions:
         dump(OUT_DIR / "sessions" / f"{s['id']}.json", {"id": s["id"], "matches": [match_public(m) for m in s["matches"]]})
     dump(OUT_DIR / "sessions.json", [{k: v for k, v in s.items() if k != "matches"} for s in sessions])
+    # 행: id, ts, type, opp, oppId, gf, ga, res, dnf, sid, crest, oppSR, oppDiv  (페이지가 검색·상대 전적·SR 차이별 전적에 씀)
     dump(OUT_DIR / "matches.json", [[m["id"], m["ts"], m["type"], m["opp"], m["oppId"], m["gf"], m["ga"], m["res"],
-                                     1 if m["dnf"] else 0, m["sid"], m["crest"]] for m in matches_desc])
+                                     1 if m["dnf"] else 0, m["sid"], m["crest"],
+                                     m["oppSR"]["sr"] if m["oppSR"] else None, m["oppDiv"]] for m in matches_desc])
+    # 우리 클럽 SR·디비전·승점 추이 (collect.py 가 값이 바뀔 때만 한 줄씩 쌓은 것)
+    dump(OUT_DIR / "history.json", [{k: h.get(k) for k in ("at", "gp", "sr", "div", "pts", "w", "d", "l")} for h in history])
     last5 = [m for s in sessions[:LAST_N_SESSIONS] for m in s["matches"]]
     # 이름 → playerId (members/stats 에는 ID 가 없어 이름으로 연결. 최신 경기의 이름이 우선)
     name_to_id: dict[str, str] = dict(NAME_TO_ID)

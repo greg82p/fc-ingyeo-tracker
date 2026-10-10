@@ -10,7 +10,8 @@ build.py              raw/ 전체 → docs/data/ (세션·선수 집계·검색 
 docs/index.html       페이지 본체 (docs/data/ 만 읽습니다)
 raw/legacy/           자동 수집 전에 손으로 받아 둔 39경기 (2026-09-29~10-08), tools/legacy_import.py 로 변환한 것
 meta/                 state.json(시즌 누적·엠블럼·연속 실패 횟수·raw 수 — 실행 시각은 쓰지 않음)
-                      opponents.json(상대 SR 첫 관측값·엠블럼 id), gaps.json(수집 누락 기록)
+                      opponents.json(상대 SR 첫 관측값·엠블럼 id·디비전), gaps.json(수집 누락 기록)
+                      club_history.json(우리 SR·디비전·승점 추이 — 값이 바뀐 실행에서만 한 줄 추가)
                       members.json(EA members/stats 선수별 시즌 누적 — 값이 바뀔 때만 파일이 바뀜)
 .github/workflows/    collect.yml(수집 → 빌드 → 커밋 → 배포), pages.yml(docs 를 직접 고쳤을 때 배포)
 tools/                legacy_import.py, selftest.py(가짜 API로 수집기 점검), cf-dispatcher/(스케줄 대체용 Cloudflare Worker)
@@ -45,6 +46,9 @@ tools/                legacy_import.py, selftest.py(가짜 API로 수집기 점�
   이 판단은 페이지를 보고 있는 시점에 하므로 새로고침 없이도 1분 안에 반영됩니다.
 - 상대팀 이름으로 검색하면 세션 목록 자리에 해당 경기들이 나옵니다. 결과가 많으면 30개씩 끊어서 보여 줍니다.
 - 플레이오프·친선 경기는 상대 이름 뒤에 태그가 붙고, 세션 전적에는 종류 구분 없이 합산됩니다.
+- 경기 이력의 "상대 Div · SR" 칸에는 상대 디비전(D5 처럼)과 스킬 레이팅이 함께 나오고, 두 번 이상 만난 클럽은 이름 옆에 통산 전적이 붙습니다.
+- "클럽 추이 · 상대 전적" 카드는 수집 누적 기준입니다. SR·디비전과 승점 추이 차트(x축은 EA 시즌 경기 수), 상대 SR 차이별 전적(200점 단위 세 구간, 10경기 미만은 승률 생략),
+  자주 만난 상대의 통산 전적을 보여 줍니다. 상단의 DNF 제외 토글이 여기에도 적용됩니다.
 
 ## 운영하면서 알아 둘 것
 
@@ -73,7 +77,8 @@ tools/                legacy_import.py, selftest.py(가짜 API로 수집기 점�
 | `sessions.json` | 세션 목록(60분 안에 이어진 경기 묶음, ID = 첫 경기 matchId) | 항상 |
 | `players.json` | 선수별 누적·최근 5세션 합계(파생값은 페이지에서 계산) + `season`(EA members/stats 시즌 누적, 이름→playerId 연결) | 항상 |
 | `sessions/{id}.json` | 그 세션의 경기·선수 상세 | 세션을 열 때 |
-| `matches.json` | 전체 경기 한 줄 요약 + 상대 엠블럼 id 후보 (상대팀 검색, 딥링크로 세션 찾기) | 검색하거나 딥링크로 들어올 때 |
+| `matches.json` | 전체 경기 한 줄 요약 + 상대 엠블럼 id 후보·상대 SR·디비전 (검색, 상대 전적, SR 차이별 전적) | 항상 |
+| `history.json` | 우리 클럽 SR·디비전·승점 추이 (`meta/club_history.json` 복사본) | 항상 |
 
 ## 알려진 제약
 
@@ -81,6 +86,9 @@ tools/                legacy_import.py, selftest.py(가짜 API로 수집기 점�
 - 사람 선수 기록만 있습니다. AI 동료나 AI 골키퍼는 응답에 없습니다. 이벤트 ID 해석은 커뮤니티 추정이며, 패스·골·도움·슈팅은 실제 경기와 대조해 확인했습니다.
 - `raw/legacy/` 의 20경기(9/29~10/3)는 이벤트 36종만 들어 있어 일부 지표가 "–" 또는 "n경기 제외" 로 표시됩니다.
 - 상대 선수 게이머태그는 저장할 때 첫 글자와 끝 글자만 남기고 마스킹합니다(`collect.py: mask_name`). 원래 값으로 되돌릴 수 없습니다.
+- 상대 디비전은 `overallStats` 에 없어서 현재 시즌 리더보드를 클럽명으로 검색해 clubId 가 같은 행에서 읽습니다. 리더보드에 없는 클럽은 "–" 로 남고,
+  저장되는 값은 조회 시점의 디비전이라 경기 당시와 다를 수 있습니다. 초기 임포트 상대는 수집마다 5클럽씩 채웁니다.
+- SR 추이의 10/2~10/8 네 점은 자동 수집 전에 받아 둔 스냅샷(`tools/snapshots/`)에서 옮긴 값이고, 그 뒤로는 수집기가 값이 바뀔 때마다 기록합니다. 소급은 되지 않습니다.
 - 클럽 엠블럼은 EA 콘텐츠 CDN 이미지를 페이지에서 직접 불러옵니다(핫링크, 저장소에 내려받지 않음). 경기 응답의 `TEAM` → 커스텀 크레스트 → 실제 배지 순으로 시도하고, 전부 실패하면 이니셜을 보여 줍니다.
   초기 임포트 상대는 엠블럼 정보가 없어서, 수집할 때마다 5클럽씩 `clubs/info` 로 채워 넣습니다(`collect.py: backfill_crests`).
 - `members/stats`(EA 가 집계한 선수별 시즌 누적)는 매 수집마다 받아 `meta/members.json` 에 두고, 페이지 하단 "시즌 선수 누적 · EA 집계" 표로 보여 줍니다.

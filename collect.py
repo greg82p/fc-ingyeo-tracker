@@ -41,7 +41,9 @@ STATE_PATH = META_DIR / "state.json"
 OPP_PATH = META_DIR / "opponents.json"
 GAPS_PATH = META_DIR / "gaps.json"
 MEMBERS_PATH = META_DIR / "members.json"   # EA members/stats (선수별 시즌 누적, EA 집계)
+HISTORY_PATH = META_DIR / "club_history.json"  # 우리 클럽 SR·디비전·승점 추이 (값이 바뀐 실행에서만 한 줄 추가)
 CREST_BACKFILL_PER_RUN = 5                 # 엠블럼 정보가 없는 기존 상대를 실행당 몇 클럽까지 clubs/info 로 보강할지
+DIV_BACKFILL_PER_RUN = 5                   # 디비전을 아직 모르는 기존 상대를 실행당 몇 클럽까지 리더보드 검색으로 보강할지
 
 HEADERS = {
     "accept": "application/json",
@@ -244,31 +246,81 @@ def record_gap(state: dict, club: dict, new_counts: dict[str, int], gaps: list) 
         log(f"  GAP: {missed} league match(es) missed (gp {prev_gp} → {cur_gp})")
 
 
+def fetch_division(oid: str, name: str | None) -> int | None:
+    """상대 클럽의 현재 디비전. overallStats 에는 현재 디비전이 없어 현재 시즌 리더보드를 클럽명으로 검색해 clubId 가 같은 행을 쓴다.
+    리더보드에 없는 클럽(이름 불일치·미집계)은 None. 호출 실패는 ApiError 로 올린다."""
+    if not name:
+        return None
+    lb = get_json("currentSeasonLeaderboard/search", clubName=name)
+    row = next((x for x in lb if str(x.get("clubId")) == str(oid)), None) if isinstance(lb, list) else None
+    return _int_or_none(row.get("currentDivision")) if row else None
+
+
 def update_opponents(new_matches: list[dict], opponents: dict) -> None:
-    """새 상대 클럽은 overallStats 1건씩 조회해 첫 관측 SR 저장. 엠블럼 정보는 경기 응답에서 바로 저장(추가 요청 없음)."""
+    """새 상대 클럽은 overallStats 1건씩 조회해 첫 관측 SR 저장. 엠블럼 정보는 경기 응답에서 바로 저장(추가 요청 없음).
+    새 경기의 상대는 처음 보는 클럽이 아니어도 디비전을 다시 조회해 경기 시점 값에 가깝게 유지한다."""
     seen = set()
     for nm in new_matches:
         oid = nm.get("oppId")
-        if not oid:
+        if not oid or oid in seen:
             continue
+        seen.add(oid)
         if oid in opponents:
             if nm.get("oppCrest") and not opponents[oid].get("crest"):
                 opponents[oid]["crest"] = nm["oppCrest"]              # 초기 임포트 상대: 다시 만나면 엠블럼 채움
-            continue
-        if oid in seen:
-            continue
-        seen.add(oid)
-        entry = {"name": nm.get("oppName"), "sr": None, "gp": None, "seenAt": now_iso(), "firstMatchId": nm["id"],
-                 "crest": nm.get("oppCrest")}
+            opponents[oid].setdefault("name", nm.get("oppName"))
+        else:
+            entry = {"name": nm.get("oppName"), "sr": None, "gp": None, "seenAt": now_iso(), "firstMatchId": nm["id"],
+                     "crest": nm.get("oppCrest")}
+            try:
+                ov = get_json("clubs/overallStats", clubIds=oid)
+                row = ov[0] if isinstance(ov, list) and ov else {}
+                entry.update({"sr": _int_or_none(row.get("skillRating")), "gp": _int_or_none(row.get("gamesPlayed"))})
+            except ApiError as e:
+                log(f"  opponent {oid} SR failed (non-fatal): {e}")
+                entry["error"] = str(e)[:80]
+            opponents[oid] = entry
+            time.sleep(1)
         try:
-            ov = get_json("clubs/overallStats", clubIds=oid)
-            row = ov[0] if isinstance(ov, list) and ov else {}
-            entry.update({"sr": _int_or_none(row.get("skillRating")), "gp": _int_or_none(row.get("gamesPlayed"))})
+            div = fetch_division(oid, opponents[oid].get("name") or nm.get("oppName"))
+            opponents[oid]["div"] = div
+            opponents[oid]["divAt"] = now_iso()                       # 조회 시각 — 새 경기가 있을 때만 바뀌므로 무변경 실행에는 영향 없음
         except ApiError as e:
-            log(f"  opponent {oid} SR failed (non-fatal): {e}")
-            entry["error"] = str(e)[:80]
-        opponents[oid] = entry
+            log(f"  opponent {oid} division failed (non-fatal): {e}")
         time.sleep(1)
+
+
+def backfill_divisions(opponents: dict, limit: int = DIV_BACKFILL_PER_RUN) -> int:
+    """디비전을 한 번도 조회하지 않은 기존 상대(초기 임포트분)를 실행당 limit 개까지 리더보드 검색으로 채운다.
+    조회했는데 리더보드에 없으면 div=None 에 divAt 만 남겨 다시 시도하지 않는다."""
+    todo = [oid for oid, o in opponents.items() if "divAt" not in o and o.get("name")][:limit]
+    done = 0
+    for oid in todo:
+        try:
+            opponents[oid]["div"] = fetch_division(oid, opponents[oid].get("name"))
+            opponents[oid]["divAt"] = now_iso()
+            done += 1
+        except ApiError as e:
+            log(f"  division backfill {oid} failed (non-fatal): {e}")
+        time.sleep(1)
+    if todo:
+        log(f"  division backfill: {done}/{len(todo)} (remaining {sum(1 for o in opponents.values() if 'divAt' not in o)})")
+    return done
+
+
+HISTORY_KEYS = ("gp", "sr", "div", "pts", "w", "d", "l")
+
+
+def update_history(history: list, club: dict) -> bool:
+    """우리 클럽 요약이 직전 기록과 다를 때만 한 줄 추가 → 변경 없는 실행에서는 파일이 그대로다."""
+    if not club or club.get("gp") is None:
+        return False
+    row = {k: club.get(k) for k in HISTORY_KEYS}
+    last = history[-1] if history else None
+    if last and all(last.get(k) == row[k] for k in HISTORY_KEYS):
+        return False
+    history.append({"at": now_iso(), **row})
+    return True
 
 
 def backfill_crests(opponents: dict, limit: int = CREST_BACKFILL_PER_RUN) -> int:
@@ -361,6 +413,9 @@ def main() -> int:
     record_gap(state, club, new_counts, gaps)
     update_opponents(new_matches, opponents)
     backfill_crests(opponents)
+    backfill_divisions(opponents)
+    history = load_json(HISTORY_PATH, [])
+    history_changed = update_history(history, club)
     members = fetch_members(load_json(MEMBERS_PATH, None))
 
     total_new = sum(new_counts.values())
@@ -369,6 +424,8 @@ def main() -> int:
     save_json(STATE_PATH, state)
     save_json(OPP_PATH, opponents)
     save_json(GAPS_PATH, gaps)
+    if history_changed:
+        save_json(HISTORY_PATH, history)
     if members:
         save_json(MEMBERS_PATH, members)
 

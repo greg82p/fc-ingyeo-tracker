@@ -84,6 +84,10 @@ def main() -> int:
             if endpoint == "clubs/info":
                 return {params["clubIds"]: {"name": "Legacy Club", "clubId": int(params["clubIds"]), "teamId": 5, "customKit": {"crestAssetId": "99000001", "selectedKitType": "0"}}}
             if endpoint == "currentSeasonLeaderboard/search":
+                if params.get("clubName") == "Opponent United":                      # 상대 디비전 조회 (clubId 로 매칭)
+                    return [{"clubId": "999", "currentDivision": "1"}, {"clubId": opp, "currentDivision": "3"}]
+                if params.get("clubName") not in (collect.CLUB_NAME_HINT,):
+                    return []                                                        # 리더보드에 없는 클럽
                 return [{"clubId": our, "currentDivision": "5", "points": "47", "cleanSheets": "28", "clubInfo": {"name": "FC INGYEO", "teamId": 2055, "customKit": {"crestAssetId": "99160104", "selectedKitType": "0"}}}]
             raise AssertionError(endpoint)
         fake_get.fail_403 = False
@@ -126,7 +130,18 @@ def main() -> int:
         assert (tmp / "meta" / "members.json").read_bytes() == mem_bytes_1, "members.json changed on a no-op run"
         opps = json.loads(opps_path.read_text())
         assert opps["777777"]["crest"] == {"team": None, "teamId": 5, "crestAssetId": 99000001, "kitType": 0}, opps["777777"]   # clubs/info 백필
-        print("② rerun OK: 0 new, no duplicate opponent lookups, state.json unchanged")
+        assert opps[opp]["div"] == 3 and "divAt" in opps[opp], opps[opp]                       # 리더보드에서 clubId 일치 행의 디비전
+        assert opps["555556"]["div"] is None and "divAt" in opps["555556"], opps["555556"]    # 리더보드에 없음 → None, 재시도 안 함
+        hist_path = tmp / "meta" / "club_history.json"
+        hist = json.loads(hist_path.read_text())
+        assert len(hist) == 1 and hist[0]["gp"] == 71 and hist[0]["sr"] == 1373 and hist[0]["div"] == 5 and hist[0]["pts"] == 47, hist
+        hist_bytes_1 = hist_path.read_bytes()
+        # ②-b 한 번 더: 백필까지 끝난 뒤의 진짜 무변경 실행 → meta/ 전부 바이트 동일, 리더보드 검색은 우리 클럽 1회뿐
+        meta_bytes = {q.name: q.read_bytes() for q in (tmp / "meta").glob("*.json")}
+        calls.clear(); assert collect.main() == 0
+        assert {q.name: q.read_bytes() for q in (tmp / "meta").glob("*.json")} == meta_bytes, "meta/ changed on a no-op run"
+        assert calls.count("currentSeasonLeaderboard/search") == 1 and calls.count("clubs/info") == 0, calls
+        print("② rerun OK: 0 new, no duplicate opponent lookups, meta/ unchanged on no-op, history 1 row")
 
         # ③ 리그 gamesPlayed 가 74 로 늘었는데 새 리그 경기는 1건 → 누락 2건 기록
         overall["gamesPlayed"] = "74"
@@ -134,7 +149,9 @@ def main() -> int:
         assert collect.main() == 0
         gaps = json.loads((tmp / "meta" / "gaps.json").read_text())
         assert len(gaps) == 1 and gaps[0]["missedLeagueMatches"] == 2, gaps
-        print("③ gap detection OK:", gaps[0])
+        hist = json.loads(hist_path.read_text())
+        assert len(hist) == 2 and hist[1]["gp"] == 74 and hist_path.read_bytes() != hist_bytes_1, hist   # 값이 바뀐 실행에서만 한 줄 추가
+        print("③ gap detection OK:", gaps[0], "· history 2 rows")
 
         # ④ 403 연속 3회 → 세 번째에 종료코드 1
         fake_get.fail_403 = True
@@ -169,6 +186,13 @@ def main() -> int:
         after = {p.name: p.read_bytes() for p in (tmp / "docs" / "data").rglob("*.json")}
         assert before == after, "build output is not deterministic"
         assert meta["clubCrest"] == [2055, 99160104], meta["clubCrest"]      # 실제 배지(kitType 0) → teamId 먼저
+        idx = json.loads((tmp / "docs" / "data" / "matches.json").read_text())
+        assert len(idx[0]) == 13 and idx[0][11] == 1450 and idx[0][12] == 3, idx[0]              # oppSR, oppDiv
+        row_1002 = next(r for r in idx if r[0] == "1002"); assert row_1002[12] is None, row_1002
+        hist_out = json.loads((tmp / "docs" / "data" / "history.json").read_text())
+        assert [h["gp"] for h in hist_out] == [71, 74] and set(hist_out[0]) == {"at", "gp", "sr", "div", "pts", "w", "d", "l"}, hist_out
+        sfile0 = json.loads((tmp / "docs" / "data" / "sessions" / "1001.json").read_text())
+        assert sfile0["matches"][0]["oppDiv"] == 3, sfile0["matches"][0].get("oppDiv")
         season = json.loads((tmp / "docs" / "data" / "players.json").read_text())["season"]
         assert season["players"][0]["id"] == "172777124" and season["players"][0]["red"] == 1 and season["players"][1]["id"] == "name:nobody", season
         print("⑤ build OK (deterministic):", meta["counts"], "hash", meta["dataHash"], "crest", meta["clubCrest"], "season rows", len(season["players"]))

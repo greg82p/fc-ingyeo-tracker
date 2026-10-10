@@ -1,0 +1,7 @@
+[
+  {"at": "2026-10-02T00:00:00Z", "gp": 30, "sr": 1459, "div": 5, "pts": 26, "w": 11, "d": 7, "l": 12, "seed": "tools/snapshots/data.json"},
+  {"at": "2026-10-03T00:00:00Z", "gp": 41, "sr": 1301, "div": 6, "pts": 29, "w": 12, "d": 7, "l": 22, "seed": "tools/snapshots/data2.json"},
+  {"at": "2026-10-06T00:00:00Z", "gp": 62, "sr": 1406, "div": 4, "pts": 42, "w": 20, "d": 12, "l": 30, "seed": "tools/snapshots/data3.json"},
+  {"at": "2026-10-08T00:00:00Z", "gp": 71, "sr": 1373, "div": 5, "pts": 47, "w": 22, "d": 14, "l": 35, "seed": "tools/snapshots/data9.json"},
+  {"at": "2026-10-09T17:40:19Z", "gp": 98, "sr": 1422, "div": 5, "pts": 65, "w": 31, "d": 19, "l": 48}
+]
