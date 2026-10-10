@@ -11,7 +11,9 @@
    "teamId": 241,
    "crestAssetId": 99160714,
    "kitType": 0
-  }
+  },
+  "div": 3,
+  "divAt": "2026-10-10T14:10:59Z"
  },
  "737854": {
   "name": "FC Gekilow",
@@ -25,7 +27,9 @@
    "teamId": 11,
    "crestAssetId": 99160221,
    "kitType": 0
-  }
+  },
+  "div": 5,
+  "divAt": "2026-10-10T14:11:01Z"
  },
  "5297": {
   "name": "SC Emslada",
@@ -39,7 +43,9 @@
    "teamId": 73,
    "crestAssetId": 99160815,
    "kitType": 1
-  }
+  },
+  "div": 3,
+  "divAt": "2026-10-10T14:11:03Z"
  },
  "5369": {
   "name": "FC YASACELONA",
@@ -53,7 +59,9 @@
    "teamId": 1745,
    "crestAssetId": 99130106,
    "kitType": 1
-  }
+  },
+  "div": 5,
+  "divAt": "2026-10-10T14:11:05Z"
  },
  "762435": {
   "name": "Barbados fc246",
@@ -67,7 +75,9 @@
    "teamId": 241,
    "crestAssetId": 99161114,
    "kitType": 0
-  }
+  },
+  "div": 6,
+  "divAt": "2026-10-10T14:11:07Z"
  },
  "587945": {
   "name": "YAMAKAYO FC",
@@ -75,7 +85,13 @@
   "gp": 117,
   "seenAt": "2026-10-07 00:37 KST",
   "firstMatchId": null,
-  "source": "legacy"
+  "source": "legacy",
+  "crest": {
+   "team": null,
+   "teamId": 10,
+   "crestAssetId": 99161021,
+   "kitType": 1
+  }
  },
  "662335": {
   "name": "FC PEGASUS 2027",
@@ -83,7 +99,13 @@
   "gp": 75,
   "seenAt": "2026-10-07 00:37 KST",
   "firstMatchId": null,
-  "source": "legacy"
+  "source": "legacy",
+  "crest": {
+   "team": null,
+   "teamId": 1,
+   "crestAssetId": 99160927,
+   "kitType": 0
+  }
  },
  "5437": {
   "name": "ac salesio",
@@ -91,7 +113,13 @@
   "gp": 43,
   "seenAt": "2026-10-07 00:37 KST",
   "firstMatchId": null,
-  "source": "legacy"
+  "source": "legacy",
+  "crest": {
+   "team": null,
+   "teamId": 106,
+   "crestAssetId": 99160621,
+   "kitType": 0
+  }
  },
  "1243046": {
   "name": "ADHDs",
@@ -99,7 +127,13 @@
   "gp": 29,
   "seenAt": "2026-10-07 00:37 KST",
   "firstMatchId": null,
-  "source": "legacy"
+  "source": "legacy",
+  "crest": {
+   "team": null,
+   "teamId": 10,
+   "crestAssetId": 99160312,
+   "kitType": 0
+  }
  },
  "770745": {
   "name": "Mobbies",
@@ -107,7 +141,13 @@
   "gp": 51,
   "seenAt": "2026-10-07 00:37 KST",
   "firstMatchId": null,
-  "source": "legacy"
+  "source": "legacy",
+  "crest": {
+   "team": null,
+   "teamId": 131682,
+   "crestAssetId": 99160128,
+   "kitType": 0
+  }
  },
  "97706": {
   "name": "fc dark horse",
