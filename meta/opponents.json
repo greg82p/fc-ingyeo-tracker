@@ -403,7 +403,9 @@
    "teamId": 105035,
    "crestAssetId": 99160515,
    "kitType": 0
-  }
+  },
+  "div": 6,
+  "divAt": "2026-10-11T15:36:19Z"
  },
  "114811": {
   "name": "FC EZ AGAIN",
@@ -416,7 +418,9 @@
    "teamId": 1,
    "crestAssetId": 99100217,
    "kitType": 1
-  }
+  },
+  "div": 5,
+  "divAt": "2026-10-11T15:36:21Z"
  },
  "523678": {
   "name": "Phoenix 27",
@@ -429,7 +433,9 @@
    "teamId": 111092,
    "crestAssetId": 99161119,
    "kitType": 0
-  }
+  },
+  "div": 4,
+  "divAt": "2026-10-11T15:36:23Z"
  },
  "7363": {
   "name": "ESUPub",
@@ -442,7 +448,9 @@
    "teamId": 9,
    "crestAssetId": 99160422,
    "kitType": 0
-  }
+  },
+  "div": 4,
+  "divAt": "2026-10-11T15:36:25Z"
  },
  "1256289": {
   "name": "Bule cherry",
@@ -455,42 +463,74 @@
    "teamId": 114815,
    "crestAssetId": 99160407,
    "kitType": 0
-  }
+  },
+  "div": 5,
+  "divAt": "2026-10-11T15:36:27Z"
  },
  "633931": {
   "name": "Fuego",
   "sr": 1370,
   "gp": 26,
   "seenAt": "2026-10-09T15:29:39Z",
-  "firstMatchId": "83482326270033"
+  "firstMatchId": "83482326270033",
+  "crest": {
+   "team": null,
+   "teamId": 243,
+   "crestAssetId": 99160225,
+   "kitType": 0
+  }
  },
  "1418304": {
   "name": "DEVU BEYOND",
   "sr": 1422,
   "gp": 13,
   "seenAt": "2026-10-09T15:29:41Z",
-  "firstMatchId": "83362439520192"
+  "firstMatchId": "83362439520192",
+  "crest": {
+   "team": null,
+   "teamId": 34,
+   "crestAssetId": 99160415,
+   "kitType": 1
+  }
  },
  "646379": {
   "name": "Tairyõ Matsuri",
   "sr": 1605,
   "gp": 37,
   "seenAt": "2026-10-09T16:35:58Z",
-  "firstMatchId": "83666388870399"
+  "firstMatchId": "83666388870399",
+  "crest": {
+   "team": null,
+   "teamId": 22,
+   "crestAssetId": 99160415,
+   "kitType": 0
+  }
  },
  "689894": {
   "name": "MorinFC",
   "sr": 1499,
   "gp": 78,
   "seenAt": "2026-10-09T16:35:59Z",
-  "firstMatchId": "83666231900277"
+  "firstMatchId": "83666231900277",
+  "crest": {
+   "team": null,
+   "teamId": 114815,
+   "crestAssetId": 99160102,
+   "kitType": 1
+  }
  },
  "238188": {
   "name": "Yugosan",
   "sr": 1174,
   "gp": 66,
   "seenAt": "2026-10-09T17:40:19Z",
-  "firstMatchId": "84104060420270"
+  "firstMatchId": "84104060420270",
+  "crest": {
+   "team": null,
+   "teamId": 241,
+   "crestAssetId": 99161026,
+   "kitType": 1
+  }
  },
  "811262": {
   "name": "SIEGE TV",
@@ -564,5 +604,65 @@
   },
   "div": 4,
   "divAt": "2026-10-11T14:20:47Z"
+ },
+ "353082": {
+  "name": "Joga Bonito 13",
+  "sr": 1424,
+  "gp": 57,
+  "seenAt": "2026-10-11T15:35:55Z",
+  "firstMatchId": "90802832700082",
+  "crest": {
+   "team": 243,
+   "teamId": 243,
+   "crestAssetId": 99160926,
+   "kitType": 0
+  },
+  "div": 5,
+  "divAt": "2026-10-11T15:35:58Z"
+ },
+ "658294": {
+  "name": "KATEMA  SEN",
+  "sr": 1621,
+  "gp": 71,
+  "seenAt": "2026-10-11T15:35:59Z",
+  "firstMatchId": "91120029010225",
+  "crest": {
+   "team": 110981,
+   "teamId": 110981,
+   "crestAssetId": 99160609,
+   "kitType": 0
+  },
+  "div": 3,
+  "divAt": "2026-10-11T15:36:02Z"
+ },
+ "6920": {
+  "name": "DESCENDENTS",
+  "sr": 1644,
+  "gp": 138,
+  "seenAt": "2026-10-11T15:36:03Z",
+  "firstMatchId": "90722823460330",
+  "crest": {
+   "team": 698,
+   "teamId": 698,
+   "crestAssetId": 99160918,
+   "kitType": 0
+  },
+  "div": 3,
+  "divAt": "2026-10-11T15:36:06Z"
+ },
+ "7766": {
+  "name": "TaKoMaTwo",
+  "sr": 1607,
+  "gp": 112,
+  "seenAt": "2026-10-11T15:36:07Z",
+  "firstMatchId": "90688704880018",
+  "crest": {
+   "team": 99160405,
+   "teamId": 5,
+   "crestAssetId": 99160405,
+   "kitType": 1
+  },
+  "div": 4,
+  "divAt": "2026-10-11T15:36:10Z"
  }
 }
