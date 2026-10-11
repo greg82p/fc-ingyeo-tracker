@@ -328,7 +328,9 @@
    "teamId": 9,
    "crestAssetId": 99160904,
    "kitType": 0
-  }
+  },
+  "div": 4,
+  "divAt": "2026-10-11T14:20:56Z"
  },
  "120317": {
   "name": "BointedMuramura",
@@ -341,7 +343,9 @@
    "teamId": 9,
    "crestAssetId": 99160418,
    "kitType": 0
-  }
+  },
+  "div": 5,
+  "divAt": "2026-10-11T14:20:58Z"
  },
  "76963": {
   "name": "Chiba FC",
@@ -354,7 +358,9 @@
    "teamId": 1,
    "crestAssetId": 99160317,
    "kitType": 0
-  }
+  },
+  "div": 3,
+  "divAt": "2026-10-11T14:21:00Z"
  },
  "816198": {
   "name": "GBMN JP",
@@ -367,7 +373,9 @@
    "teamId": 1,
    "crestAssetId": 99160825,
    "kitType": 0
-  }
+  },
+  "div": 4,
+  "divAt": "2026-10-11T14:21:02Z"
  },
  "87333": {
   "name": "BONSAI FC",
@@ -380,42 +388,74 @@
    "teamId": 243,
    "crestAssetId": 99161118,
    "kitType": 0
-  }
+  },
+  "div": 3,
+  "divAt": "2026-10-11T14:21:04Z"
  },
  "5467": {
   "name": "IKUNO future fc",
   "sr": 1479,
   "gp": 49,
   "seenAt": "2026-10-09T13:45:50Z",
-  "firstMatchId": "79894512020101"
+  "firstMatchId": "79894512020101",
+  "crest": {
+   "team": null,
+   "teamId": 105035,
+   "crestAssetId": 99160515,
+   "kitType": 0
+  }
  },
  "114811": {
   "name": "FC EZ AGAIN",
   "sr": 1518,
   "gp": 71,
   "seenAt": "2026-10-09T13:45:52Z",
-  "firstMatchId": "80008134530459"
+  "firstMatchId": "80008134530459",
+  "crest": {
+   "team": null,
+   "teamId": 1,
+   "crestAssetId": 99100217,
+   "kitType": 1
+  }
  },
  "523678": {
   "name": "Phoenix 27",
   "sr": 1583,
   "gp": 28,
   "seenAt": "2026-10-09T14:40:48Z",
-  "firstMatchId": "83452247460413"
+  "firstMatchId": "83452247460413",
+  "crest": {
+   "team": null,
+   "teamId": 111092,
+   "crestAssetId": 99161119,
+   "kitType": 0
+  }
  },
  "7363": {
   "name": "ESUPub",
   "sr": 1624,
   "gp": 23,
   "seenAt": "2026-10-09T14:40:50Z",
-  "firstMatchId": "83280451340168"
+  "firstMatchId": "83280451340168",
+  "crest": {
+   "team": null,
+   "teamId": 9,
+   "crestAssetId": 99160422,
+   "kitType": 0
+  }
  },
  "1256289": {
   "name": "Bule cherry",
   "sr": 1511,
   "gp": 14,
   "seenAt": "2026-10-09T15:29:37Z",
-  "firstMatchId": "83394679700129"
+  "firstMatchId": "83394679700129",
+  "crest": {
+   "team": null,
+   "teamId": 114815,
+   "crestAssetId": 99160407,
+   "kitType": 0
+  }
  },
  "633931": {
   "name": "Fuego",
@@ -479,5 +519,50 @@
   "gp": 124,
   "seenAt": "2026-10-09T17:40:27Z",
   "firstMatchId": "83946049380140"
+ },
+ "274847": {
+  "name": "Rainbow17",
+  "sr": 1388,
+  "gp": 18,
+  "seenAt": "2026-10-11T14:20:37Z",
+  "firstMatchId": "90706531250358",
+  "crest": {
+   "team": 18,
+   "teamId": 18,
+   "crestAssetId": 99160107,
+   "kitType": 0
+  },
+  "div": 5,
+  "divAt": "2026-10-11T14:20:40Z"
+ },
+ "5398": {
+  "name": "EXITAIHEN",
+  "sr": 1466,
+  "gp": 97,
+  "seenAt": "2026-10-11T14:20:41Z",
+  "firstMatchId": "90604703970406",
+  "crest": {
+   "team": 22,
+   "teamId": 22,
+   "crestAssetId": 99160705,
+   "kitType": 0
+  },
+  "div": 6,
+  "divAt": "2026-10-11T14:20:44Z"
+ },
+ "921077": {
+  "name": "AGOGO Hiroshima",
+  "sr": 1471,
+  "gp": 29,
+  "seenAt": "2026-10-11T14:20:45Z",
+  "firstMatchId": "90660364210276",
+  "crest": {
+   "team": 99160218,
+   "teamId": 241,
+   "crestAssetId": 99160218,
+   "kitType": 1
+  },
+  "div": 4,
+  "divAt": "2026-10-11T14:20:47Z"
  }
 }
