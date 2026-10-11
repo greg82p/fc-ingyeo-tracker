@@ -553,7 +553,9 @@
    "teamId": 8,
    "crestAssetId": 99160320,
    "kitType": 0
-  }
+  },
+  "div": 5,
+  "divAt": "2026-10-11T17:22:15Z"
  },
  "1476798": {
   "name": "omoda",
@@ -566,7 +568,9 @@
    "teamId": 13,
    "crestAssetId": 99161009,
    "kitType": 0
-  }
+  },
+  "div": 6,
+  "divAt": "2026-10-11T17:22:17Z"
  },
  "588706": {
   "name": "greenleaf",
@@ -579,7 +583,9 @@
    "teamId": 22,
    "crestAssetId": 99161126,
    "kitType": 0
-  }
+  },
+  "div": 5,
+  "divAt": "2026-10-11T17:22:19Z"
  },
  "582229": {
   "name": "KARIKARI UME",
@@ -592,7 +598,9 @@
    "teamId": 243,
    "crestAssetId": 99160129,
    "kitType": 0
-  }
+  },
+  "div": 3,
+  "divAt": "2026-10-11T17:22:21Z"
  },
  "274847": {
   "name": "Rainbow17",
