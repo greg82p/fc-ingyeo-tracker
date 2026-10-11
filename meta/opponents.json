@@ -478,7 +478,9 @@
    "teamId": 243,
    "crestAssetId": 99160225,
    "kitType": 0
-  }
+  },
+  "div": 6,
+  "divAt": "2026-10-11T15:57:24Z"
  },
  "1418304": {
   "name": "DEVU BEYOND",
@@ -491,7 +493,9 @@
    "teamId": 34,
    "crestAssetId": 99160415,
    "kitType": 1
-  }
+  },
+  "div": 6,
+  "divAt": "2026-10-11T15:57:26Z"
  },
  "646379": {
   "name": "Tairyõ Matsuri",
@@ -504,7 +508,9 @@
    "teamId": 22,
    "crestAssetId": 99160415,
    "kitType": 0
-  }
+  },
+  "div": 4,
+  "divAt": "2026-10-11T15:57:28Z"
  },
  "689894": {
   "name": "MorinFC",
@@ -517,7 +523,9 @@
    "teamId": 114815,
    "crestAssetId": 99160102,
    "kitType": 1
-  }
+  },
+  "div": 5,
+  "divAt": "2026-10-11T15:57:30Z"
  },
  "238188": {
   "name": "Yugosan",
@@ -530,35 +538,61 @@
    "teamId": 241,
    "crestAssetId": 99161026,
    "kitType": 1
-  }
+  },
+  "div": 6,
+  "divAt": "2026-10-11T15:57:32Z"
  },
  "811262": {
   "name": "SIEGE TV",
   "sr": 1537,
   "gp": 22,
   "seenAt": "2026-10-09T17:40:21Z",
-  "firstMatchId": "84098002640158"
+  "firstMatchId": "84098002640158",
+  "crest": {
+   "team": null,
+   "teamId": 8,
+   "crestAssetId": 99160320,
+   "kitType": 0
+  }
  },
  "1476798": {
   "name": "omoda",
   "sr": 1360,
   "gp": 7,
   "seenAt": "2026-10-09T17:40:23Z",
-  "firstMatchId": "83792559400269"
+  "firstMatchId": "83792559400269",
+  "crest": {
+   "team": null,
+   "teamId": 13,
+   "crestAssetId": 99161009,
+   "kitType": 0
+  }
  },
  "588706": {
   "name": "greenleaf",
   "sr": 1304,
   "gp": 76,
   "seenAt": "2026-10-09T17:40:25Z",
-  "firstMatchId": "83706553490429"
+  "firstMatchId": "83706553490429",
+  "crest": {
+   "team": null,
+   "teamId": 22,
+   "crestAssetId": 99161126,
+   "kitType": 0
+  }
  },
  "582229": {
   "name": "KARIKARI UME",
   "sr": 1642,
   "gp": 124,
   "seenAt": "2026-10-09T17:40:27Z",
-  "firstMatchId": "83946049380140"
+  "firstMatchId": "83946049380140",
+  "crest": {
+   "team": null,
+   "teamId": 243,
+   "crestAssetId": 99160129,
+   "kitType": 0
+  }
  },
  "274847": {
   "name": "Rainbow17",
@@ -664,5 +698,20 @@
   },
   "div": 4,
   "divAt": "2026-10-11T15:36:10Z"
+ },
+ "5012": {
+  "name": "TRUENO",
+  "sr": 1626,
+  "gp": 191,
+  "seenAt": "2026-10-11T15:57:14Z",
+  "firstMatchId": "90878819820406",
+  "crest": {
+   "team": 48,
+   "teamId": 48,
+   "crestAssetId": 99160504,
+   "kitType": 0
+  },
+  "div": 3,
+  "divAt": "2026-10-11T15:57:17Z"
  }
 }
