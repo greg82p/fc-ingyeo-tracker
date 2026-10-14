@@ -37,7 +37,7 @@ FC INGYEO(clubId 829628, common-gen5)의 EA FC 27 Pro Clubs 경기 기록을 **1
 
 | 엔드포인트 | 파라미터 | 반환 | 수집 주기 | 비고 |
 | --- | --- | --- | --- | --- |
-| `/clubs/matches` | `platform`, `clubIds`(1개), `matchType`, `maxResultCount` | 경기 배열, 최신순 | 매 실행, matchType 3종 각각 | **핵심.** 선수별 상세·이벤트 포함 |
+| `/clubs/matches` | `platform`, `clubIds`(1개), `matchType`, `maxResultCount` | 경기 배열, 최신순 | 매 실행, `leagueMatch`·`playoffMatch` 각각 (친선은 2026-10-14부터 제외) | **핵심.** 선수별 상세·이벤트 포함 |
 | `/clubs/overallStats` | `platform`, `clubIds`(1개) | 배열\[1\] | 매 실행(우리) + 새 상대 1회 | 시즌 누적, 스킬 레이팅 |
 | `/allTimeLeaderboard/search` | `platform`, `clubName`, `maxResultCount` | 배열 | 매 실행 | 현재·최고 디비전, 승점, 클린시트는 **여기에만** 있음 |
 | `/currentSeasonLeaderboard/search` | 위와 같음 | 배열 | 선택 | 관측 기간에는 allTime과 값이 같았음 |
@@ -187,7 +187,8 @@ docs/                                   GitHub Pages 배포 루트
 ### 6.1 실행 순서
 
 1. `raw/state.json` 읽기 (마지막 `gamesPlayed`, 연속 실패 수).
-2. `matchType` 3종을 각각 `maxResultCount=10`으로 호출. 호출 사이 1초 대기.
+2. `leagueMatch`·`playoffMatch`를 각각 `maxResultCount=10`으로 호출. 호출 사이 1초 대기.
+   - 2026-10-14: 클럽이 친선경기를 하지 않으므로 `friendlyMatch` 호출을 뺐다(이전 수집분에도 친선 경기는 없음). `build.py`와 페이지의 `friendly` 처리는 남겨 두어 기존 형식과 호환된다.
 3. 경기별로 `raw/matches/{type}/{matchId}.json`이 **없으면** 저장. 있으면 내용을 비교해 달라졌을 때만 덮어쓰고 로그에 남긴다(저장 전 `timeAgo` 제거).
 4. 새 경기의 상대 중 이번 실행에서 처음 보는 클럽만 `clubs/overallStats` 호출 → 경기 파일의 `_meta.oppSR`, `_meta.oppGP`에 기록. 원본 응답은 건드리지 않고 `_meta` 키만 덧붙인다.
 5. 우리 `overallStats`, `allTimeLeaderboard`, `members/stats` 호출 → 전날 파일과 다를 때만 오늘 날짜 파일로 저장.

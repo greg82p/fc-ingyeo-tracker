@@ -58,7 +58,7 @@ def main() -> int:
         our = collect.CLUB_ID; opp = "555555"
         base_ts = 1_791_400_000
         matches = {"leagueMatch": [fake_match("1001", base_ts, our, opp), fake_match("1002", base_ts + 900, our, "555556")],
-                   "playoffMatch": [fake_match("2001", base_ts + 1800, our, opp)], "friendlyMatch": []}
+                   "playoffMatch": [fake_match("2001", base_ts + 1800, our, opp)]}
         overall = {"gamesPlayed": "71", "gamesPlayedPlayoff": "3", "wins": "22", "ties": "14", "losses": "35", "goals": "99",
                    "goalsAgainst": "117", "skillRating": "1373", "bestDivision": "4", "wstreak": "0", "unbeatenstreak": "1"}
         calls = []
@@ -68,6 +68,7 @@ def main() -> int:
             if fake_get.fail_403:
                 raise collect.ApiError("HTTP 403 " + endpoint)
             if endpoint == "clubs/matches":
+                assert params["matchType"] != "friendlyMatch", params           # 친선은 조회하지 않는다
                 return matches[params["matchType"]]
             if endpoint == "clubs/overallStats":
                 if params["clubIds"] == our:

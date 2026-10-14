@@ -19,7 +19,7 @@ EA FC 27 프로클럽 **FC INGYEO**(clubId 829628, platform common-gen5) 경기 
 - 비공식 API: `https://proclubs.ea.com/api/fc/<endpoint>`, 모두 GET·인증 없음, 숫자도 문자열로 옵니다.
 - Akamai가 막기 때문에 브라우저 헤더(`sec-fetch-site: same-origin`, referer, UA 등, `collect.py: HEADERS`)가 필요합니다. 일반 `curl`은 차단된다고 알려져 있어서 응답을 직접 확인할 때는 그 헤더를 붙인 Python urllib을 쓰는 게 안전합니다.
 - `clubs/matches`는 매치타입별로 최근 10경기만 줍니다(`maxResultCount`를 늘려도 10). 두 실행 사이에 10경기를 넘게 치르면 그 경기는 영구 누락됩니다.
-- 수집 단계별 호출: `clubs/matches` ×3(치명적) → `clubs/overallStats`(우리) → `currentSeasonLeaderboard/search`(우리 디비전) → 새 상대마다 `clubs/overallStats` + 리더보드 검색(디비전) → 백필(`clubs/info`, 리더보드 검색, 각 최대 5회) → `members/stats`. `clubs/matches` 외의 실패는 로그에만 남고 알림이 오지 않습니다.
+- 수집 단계별 호출: `clubs/matches` ×2(리그·플레이오프, 치명적. 친선은 조회하지 않음) → `clubs/overallStats`(우리) → `currentSeasonLeaderboard/search`(우리 디비전) → 새 상대마다 `clubs/overallStats` + 리더보드 검색(디비전) → 백필(`clubs/info`, 리더보드 검색, 각 최대 5회) → `members/stats`. `clubs/matches` 외의 실패는 로그에만 남고 알림이 오지 않습니다.
 
 ## 확인된 사실 (README·DESIGN에 아직 없음)
 

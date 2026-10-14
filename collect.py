@@ -4,7 +4,7 @@
 표준 라이브러리만 사용한다 (2026-10-08 검증: 브라우저 헤더만 있으면 urllib 로 통과).
 실행 1회 = 다음 순서.
 
-  1. 세 매치타입(league / playoff / friendly)의 최근 10경기 조회
+  1. 두 매치타입(league / playoff)의 최근 10경기 조회 (친선은 하지 않으므로 조회하지 않음)
   2. raw/matches/{matchId}.json 이 없는 경기만 저장 (상대 선수 게이머태그는 마스킹)
   3. 우리 클럽 overallStats + currentSeasonLeaderboard 로 시즌 누적 갱신, gamesPlayed 증가분으로 누락 감지
   4. 새 상대 클럽의 스킬 레이팅을 첫 관측 시점에 meta/opponents.json 에 저장
@@ -29,7 +29,7 @@ CLUB_ID = os.environ.get("CLUB_ID", "829628")
 CLUB_NAME_HINT = os.environ.get("CLUB_NAME", "FC INGYEO")        # 리더보드 검색어
 PLATFORM = os.environ.get("PLATFORM", "common-gen5")
 BASE = "https://proclubs.ea.com/api/fc"
-MATCH_TYPES = ["leagueMatch", "playoffMatch", "friendlyMatch"]
+MATCH_TYPES = ["leagueMatch", "playoffMatch"]   # 친선(friendlyMatch)은 플레이하지 않아 조회하지 않는다
 TIMEOUT = 20
 RETRIES = 2                      # 요청당 재시도 (총 3회)
 FAIL_LIMIT = 3                   # 연속 실패 n회면 종료코드 1 → GitHub 알림
@@ -150,7 +150,7 @@ def crest_of(club: dict) -> dict:
 
 # ---------- 수집 ----------
 def collect_matches(state: dict) -> tuple[dict[str, int], list[dict]]:
-    """세 타입 조회 → 새 파일 저장. (타입별 새 경기 수, 새 경기 요약 리스트)"""
+    """두 타입 조회 → 새 파일 저장. (타입별 새 경기 수, 새 경기 요약 리스트)"""
     new_counts: dict[str, int] = {}
     new_matches: list[dict] = []
     for mt in MATCH_TYPES:
