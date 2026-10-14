@@ -160,7 +160,7 @@ tbody tr:hover>td{background:var(--surface-2)}
 .chart .ctip{position:absolute;pointer-events:none;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:6px 8px;font-size:12px;line-height:1.4;box-shadow:0 2px 8px rgba(0,0,0,.08);white-space:nowrap;display:none}
 .two{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:18px}
 .two h3{margin:0 0 4px;font-size:15px}
-#bandT td:first-child,#bandT th:first-child,#h2hT td:first-child,#h2hT th:first-child{text-align:left}
+#h2hT td:first-child,#h2hT th:first-child{text-align:left}
 .h2hname{cursor:pointer;text-decoration:underline dotted;text-underline-offset:3px}
 .more{padding:10px 8px 2px;text-align:center}
 .more button{border:1px solid var(--border);background:var(--surface);color:var(--s1);border-radius:999px;padding:7px 16px;font:inherit;font-size:13px;cursor:pointer}
@@ -279,7 +279,7 @@ footer{color:var(--muted);font-size:12px;margin-top:8px}
       <span class="fresh" id="fresh"></span>
     </div>
     <div class="controls" id="homeCtl">
-      <label class="toggle"><input type="checkbox" id="exDnf"> 이탈(DNF) 경기 제외</label>
+      <label class="toggle"><input type="checkbox" id="exDnf" checked> 이탈(DNF) 경기 제외</label>
     </div>
   </header>
 
@@ -323,11 +323,6 @@ footer{color:var(--muted);font-size:12px;margin-top:8px}
       </div>
       <div class="charts" id="trend"></div>
       <div class="two">
-        <div>
-          <h3>상대 SR 차이별 전적</h3>
-          <p class="desc" id="bandDesc"></p>
-          <div class="tbl-wrap"><table class="agg-t" id="bandT"></table></div>
-        </div>
         <div>
           <h3>자주 만난 상대</h3>
           <p class="desc">두 번 이상 만난 클럽의 통산 전적. 이름을 누르면 그 클럽과의 경기를 검색합니다.</p>
@@ -488,7 +483,7 @@ const LIVE_TIP = '마지막 경기가 1시간 이내라 아직 진행 중인 세
 const PAGE_SIZE = 10;                                                   // 세션 목록·검색 결과 페이지 크기
 let liveSnapshot = null;                                                // 세션별 '진행 중' 여부 스냅샷 (바뀐 경우에만 다시 그리기 위해)
 const liveSnap = () => sessions.map(isLive).join('');
-let state = {exDnf:false, open:null, showZero:false, sid:null, q:'', sessShown:PAGE_SIZE, hitShown:PAGE_SIZE*3};
+let state = {exDnf:true, open:null, showZero:false, sid:null, q:'', sessShown:PAGE_SIZE, hitShown:PAGE_SIZE*3};
 const curSess = () => sessById(state.sid) || sessions[0];
 const curMatches = () => (curSess() && curSess().ms) || [];
 const noDnf = ms => ms.filter(m => !(state.exDnf && m.dnf));
@@ -897,7 +892,7 @@ const GROUPS = {
     ['g','골',null,0,'n'],['a','도움',null,0,'n'],['ga','공격포인트',null,0,'n']]},
   atk:{label:'공격', cols:[
     ['sh','슈팅',null,0,'n'],['e217','유효슈팅','event_217',0,'n'],['sotR','유효슈팅률',null,0,'r','%'],['conv','골/슈팅',null,0,'r','%'],
-    ['e13','박스 안 유효','event_13',0,'n'],['e18','박스 밖 유효','event_18',0,'n'],['e112','드리블 돌파','event_112 · 상대를 제친 횟수',0,'n'],['e174','드리블 성공','event_174 · 드리블 성공 횟수(확정 매핑)',0,'n']]},
+    ['e13','박스 안 유효','event_13',0,'n'],['e18','박스 밖 유효','event_18',0,'n'],['e112','드리블 돌파','event_112 · 상대를 제친 횟수',0,'n']]},
   pass:{label:'패스', cols:[
     ['pc','성공','EA 집계 패스 − 오프사이드 패스(event_153)',0,'n'],['pa','시도',null,0,'n'],['pR','성공률','오프사이드 패스는 실패로 처리',0,'r','%'],
     ['fwd','전진','event_30 − 오프사이드 패스(오프사이드는 항상 전진 패스) · 괄호는 성공 패스 대비 비율',0,'np','pc'],['e32','백','event_32 · 괄호는 성공 패스 대비 비율',0,'np','pc'],['e34','횡','event_34 · 괄호는 성공 패스 대비 비율',0,'np','pc'],
@@ -1017,11 +1012,6 @@ function renderSeason(){
 function renderPlayers(){ renderAggS(); renderAggA(); renderSeason(); renderClub(); }
 
 /* ---------- 클럽 추이 · 상대 전적 (수집 누적) ---------- */
-const BANDS = [
-  {k:'low',  label:'상대가 200 이상 낮음', test: d => d <= -200},
-  {k:'mid',  label:'비슷함 (±200 미만)',   test: d => d > -200 && d < 200},
-  {k:'high', label:'상대가 200 이상 높음', test: d => d >= 200},
-];
 function recordOf(ms){
   const w = ms.filter(r=>r.res==='W').length, d = ms.filter(r=>r.res==='D').length, l = ms.filter(r=>r.res==='L').length;
   return {n: ms.length, w, d, l, gf: ms.reduce((a,r)=>a+r.gf,0), ga: ms.reduce((a,r)=>a+r.ga,0), winPct: ms.length ? w/ms.length*100 : null};
@@ -1030,14 +1020,7 @@ const recCells = r => `<td class="r">${r.n}</td><td><b>${r.w}승 ${r.d}무 ${r.l
 function renderClub(){
   if(!INDEX){ return; }
   const all = INDEX.filter(r => !(state.exDnf && r.dnf));
-  $('#clubDesc').textContent = `수집한 ${all.length}경기 기준${state.exDnf?' (DNF 제외)':''}. SR 차이는 상대를 처음 만난 시점의 상대 SR − 현재 우리 SR(${C.sr})이라 과거 경기일수록 오차가 있습니다.`;
-  // SR 차이별 전적
-  const known = all.filter(r => r.oppSR!=null), unknown = all.length - known.length;
-  const rows = BANDS.map(b => ({...b, rec: recordOf(known.filter(r => b.test(r.oppSR - C.sr)))}));
-  $('#bandDesc').textContent = `SR 을 아는 ${known.length}경기${unknown?` (SR 미상 ${unknown}경기 제외)`:''}. 승률은 10경기 이상일 때만 표시.`;
-  $('#bandT').innerHTML = `<thead><tr><th>상대 SR 차이</th><th class="r">경기</th><th>전적</th><th class="r">승률</th><th class="r">득실</th></tr></thead><tbody>`
-    + rows.map(b => `<tr><td>${b.label}</td>${recCells(b.rec)}</tr>`).join('')
-    + `<tr style="border-top:2px solid var(--border)"><td class="muted">전체</td>${recCells(recordOf(known))}</tr></tbody>`;
+  $('#clubDesc').textContent = `수집한 ${all.length}경기 기준${state.exDnf?' (DNF 제외)':''}.`;
   // 자주 만난 상대
   const byOpp = new Map();
   all.forEach(r => { if(!byOpp.has(r.oppId)) byOpp.set(r.oppId, []); byOpp.get(r.oppId).push(r); });
@@ -1053,7 +1036,7 @@ function renderClub(){
   renderTrend();
 }
 
-/* ---------- 추이 차트 (SR · 디비전 / 승점), x = EA 시즌 경기 수 ---------- */
+/* ---------- 추이 차트 (SR · 디비전), x = EA 시즌 경기 수 ---------- */
 const niceStep = raw => { const p = Math.pow(10, Math.floor(Math.log10(raw))); const f = raw / p; return (f <= 1 ? 1 : f <= 2 ? 2 : f <= 5 ? 5 : 10) * p; };
 function lineChart({title, pts, y, fmtY, divs, W = 320}){
   const H = 150, L = 40, R = 8, T = divs ? 26 : 12, B = 22;
@@ -1084,15 +1067,14 @@ function lineChart({title, pts, y, fmtY, divs, W = 320}){
 function renderTrend(){
   const el = $('#trend');
   const pts = (HISTORY||[]).filter(h => h.gp!=null && h.sr!=null).sort((a,b)=>a.gp-b.gp);
-  if(pts.length < 2){ el.innerHTML = `<div class="chart"><h3>SR · 디비전 · 승점 추이</h3><p class="muted" style="margin:6px 0">기록이 2개 이상 쌓이면 표시됩니다. 수집기가 시즌 누적이 바뀔 때마다 한 줄씩 저장합니다.</p></div>`; return; }
+  if(pts.length < 2){ el.innerHTML = `<div class="chart"><h3>SR · 디비전 추이</h3><p class="muted" style="margin:6px 0">기록이 2개 이상 쌓이면 표시됩니다. 수집기가 시즌 누적이 바뀔 때마다 한 줄씩 저장합니다.</p></div>`; return; }
   // 카드 폭에 맞춰 그린다 (viewBox 를 늘리면 글자가 찌그러지므로 폭을 먼저 재고 그 폭으로 좌표 계산)
-  const W = Math.max(240, Math.floor(((el.clientWidth || 640) - (el.clientWidth > 600 ? 14 : 0)) / (el.clientWidth > 600 ? 2 : 1)) - 24);
-  el.innerHTML = lineChart({title:'스킬 레이팅 (SR) · 디비전', pts, y: p=>p.sr, fmtY: (v)=>fmt(Math.round(v)), divs:true, W})
-               + lineChart({title:'승점 (EA 리더보드)', pts: pts.filter(p=>p.pts!=null), y: p=>p.pts, fmtY: (v)=>fmt(Math.round(v)), W});
+  const W = Math.max(240, (el.clientWidth || 640) - 24);
+  el.innerHTML = lineChart({title:'스킬 레이팅 (SR) · 디비전', pts, y: p=>p.sr, fmtY: (v)=>fmt(Math.round(v)), divs:true, W});
   // hover: 가장 가까운 점의 값 · 날짜 (두 차트 동일)
   el.querySelectorAll('.chart').forEach(ch => {
     const svg = ch.querySelector('svg'); if(!svg) return;
-    const isSr = ch.dataset.chart.startsWith('스킬'); const data = isSr ? pts : pts.filter(p=>p.pts!=null);
+    const isSr = true, data = pts;
     const dots = [...svg.querySelectorAll('.dot')], tip = ch.querySelector('.ctip'), cross = svg.querySelector('.cross');
     const show = i => { const p = data[i], d = dots[i]; if(!p||!d) return; dots.forEach(o=>o.setAttribute('r',4)); d.setAttribute('r',6);
       cross.style.display=''; cross.setAttribute('x1', d.getAttribute('cx')); cross.setAttribute('x2', d.getAttribute('cx'));
@@ -1114,7 +1096,7 @@ function buildNotes(){ return [
   '<b>세션</b> = 60분 안에 이어진 경기 묶음. 관측된 세션 내 최대 간격은 28분이었습니다. 세션 ID는 첫 경기 matchId라 뒤에 경기가 붙어도 바뀌지 않습니다. "진행 중"은 지금 시각 기준 마지막 경기가 1시간 이내인 세션이며, 1시간 동안 새 경기가 없으면 사라집니다.',
   '<b>초기 수집본(9/29~10/3, 20경기)</b>은 자동 수집 전에 수동으로 받은 스냅샷이라 이벤트 36종만 저장했습니다(현재 61종). 패스 실패의 방향·거리, 크로스, 빗나간 슈팅 위치, 태클 유형, 파울(event_3), 팀 경고·오프사이드가 없어 해당 항목은 "–" 또는 "n경기 제외"로 표시합니다. 90분당 값은 기록된 경기의 출전시간만으로 계산합니다.',
   '<b>시즌 누적</b>(상단)은 EA가 집계한 현 시즌 71경기 값이고, <b>수집 누적</b>(선수별 집계)은 수집 시작 이후 경기만입니다. 두 숫자는 범위가 달라 직접 비교할 수 없습니다.',
-  '<b>상대 Div · 상대 전적 · SR 차이별 전적 · 추이</b>: 상대 디비전은 수집기가 현재 시즌 리더보드를 클럽명으로 검색해 clubId가 일치하는 행에서 읽은 가장 최근 값입니다(리더보드에 없으면 –, 경기 당시 값과 다를 수 있음). SR 차이별 전적의 기준은 현재 우리 SR 하나라 과거 경기일수록 당시 차이와 어긋나며, 10경기 미만 구간은 승률을 비우고 전적만 둡니다. 추이 차트의 x축은 EA 시즌 누적 경기 수이고 10/2~10/8 네 점은 자동 수집 전 수동 스냅샷에서 가져온 값입니다.',
+  '<b>상대 Div · 상대 전적 · 추이</b>: 상대 디비전은 수집기가 현재 시즌 리더보드를 클럽명으로 검색해 clubId가 일치하는 행에서 읽은 가장 최근 값입니다(리더보드에 없으면 –, 경기 당시 값과 다를 수 있음). 추이 차트의 x축은 EA 시즌 누적 경기 수이고 10/2~10/8 네 점은 자동 수집 전 수동 스냅샷에서 가져온 값입니다.',
   '<b>최근 10경기만 조회됩니다.</b> <code>/clubs/matches</code>는 <code>maxResultCount</code>를 늘려도 10건만 반환합니다. 시즌 전체 세부 스탯은 소급할 수 없고 주기적으로 수집해 쌓아야 합니다.',
   `<b>상대 SR(스킬 레이팅)</b>은 상대 클럽을 처음 만난 수집 시점에 <code>/clubs/overallStats</code>로 1회 조회한 값입니다. 경기 당시 값과 최대 수집 간격만큼 어긋날 수 있고, 10/4 이전 경기의 상대는 조회하지 않아 비어 있습니다. 시즌 경기 수가 10경기 미만인 클럽은 "n경기" 태그로 표시했습니다. 괄호 값 = 상대 − 우리.`,
   '<b>득점자</b>는 사람 선수의 골 기록입니다. 팀 득점보다 적으면 차이를 "기타"로 표시합니다(AI 동료 득점 또는 자책골 추정).',
@@ -1126,7 +1108,7 @@ function buildNotes(){ return [
   '<b>0 값 숨김:</b> 선수 세부 화면에서 드물게 나오는 항목(크로스, 세컨 어시스트, 코너킥, 오프사이드 걸림, 슬라이딩 태클, 파울, 피파울, 경고 — 최근 데이터에서 발생률 20% 미만)과 0인 "분류 불명" 행은 기본으로 숨기며, "0인 항목도 보기"로 모두 볼 수 있습니다.',
   '<b>패스 방향·거리별 시도</b> = 성공 + 실패 이벤트. 이벤트 합이 총 패스 수(<code>passesmade</code>/<code>passattempts</code>)와 정확히 맞지 않아 차이를 "분류 불명"으로 표시합니다.',
   '<b>크로스</b>: 성공 = event_36(세트피스 크로스 포함), 시도 = 성공 + 실패(event_37, 오픈플레이만). README의 "크로스 시도"(event_157)와 1~2건 차이가 나는 경기가 있습니다. 코너킥(event_145)은 별도입니다.',
-  '<b>드리블 돌파</b>(event_112)는 상대를 제친 횟수이며 스킬무브로 제친 경우(event_38)를 포함합니다. <b>드리블 성공</b>(event_174)은 확정 매핑으로, 선수별 집계 표의 공격 탭에 있습니다.',
+  '<b>드리블 돌파</b>(event_112)는 상대를 제친 횟수이며 스킬무브로 제친 경우(event_38)를 포함합니다. 드리블 성공(event_174)은 원본에 보존하지만 표에는 노출하지 않습니다.',
   '<b>태클 유형</b>: 스탠딩 성공(event_229) + 슬라이딩 성공(event_230)은 태클 성공 수와 대부분 일치합니다(출전 32건 중 30건). 실패 태클은 유형별로 나뉘지 않아 유형별 성공률은 계산할 수 없습니다.',
   '<b>오프사이드 걸림(event_104)</b>은 확정되지 않은 부분 매핑입니다(fc27-clubs-api 문서: "횟수가 자주 적게 잡힘"). 그래서 "참고" 표시를 붙였습니다. 오프사이드 패스(event_153, 확정)와는 다른 지표입니다.',
   '<b>이벤트 ID 해석은 커뮤니티 추정</b>입니다(eafc-pro-clubs-api-research README, 이를 따르는 fc27-clubs-api 문서와 대조 완료 — 두 문서는 같은 연구에 기반하므로 독립 검증은 아님). 골(event_214)·도움(event_11)·슈팅(event_217+218)은 이번 데이터 40건 모두 필드 값과 일치했습니다. 나머지는 EA 공식 정의가 아닙니다.',
