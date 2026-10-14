@@ -317,12 +317,9 @@ GitHub Pages는 파일을 약 10분 캐시한다. `index.json`은 매 방문 `?v
 ### 9.2 GitHub Actions 워크플로 (`.github/workflows/collect.yml`)
 
 ```yaml
-# 2026-10-10 확정: KST 21:00~03:00 에만 수집. 낮에는 경기가 없어 스케줄 없음 (필요 시 수동 실행)
+# 2026-10-14: schedule 제거 — GitHub schedule 은 best effort 라 대부분 누락·지연. 수동 실행 전용, 이후 외부 트리거(Cloudflare Cron 등)가 workflow_dispatch 호출
 on:
-  schedule:
-    - cron: '3,23,43 12-17 * * *'       # UTC 12:03~17:43 = KST 21:03~02:43, 20분 간격 (하루 18회)
-    - cron: '3 18 * * *'                # UTC 18:03 = KST 03:03, 밤 세션 마감 1회
-  workflow_dispatch:                     # 수동 실행 버튼 (Cloudflare 우회로도 이 이벤트를 사용)
+  workflow_dispatch:                     # 수동 실행 버튼 · 외부 트리거도 이 이벤트를 사용
 concurrency: { group: collect, cancel-in-progress: false }   # 겹쳐 돌지 않게
 permissions: { contents: write, pages: write, id-token: write }
 jobs:
@@ -335,7 +332,7 @@ jobs:
         with: { python-version: '3.12' }
       - run: python collect.py           # 표준 라이브러리만 사용 (pip install 없음)
       - run: python build.py
-      - run: |                             # 변경이 있을 때만 커밋, docs/ 가 바뀌었을 때만 배포 (실제 파일은 keepalive 단계 포함)
+      - run: |                             # 변경이 있을 때만 커밋, docs/ 가 바뀌었을 때만 배포
           git add raw meta docs
           git diff --cached --quiet && exit 0
           git commit -m "collect $(date -u +%FT%TZ)" && git push
@@ -495,6 +492,8 @@ Mac을 저장소의 자체 러너(self-hosted runner)로 등록하고 워크플�
 **구현 현황 (2026-10-09).** 1·2·3·4·5단계의 코드를 `fc-ingyeo-tracker` 저장소 뼈대로 작성했다: `collect.py`(세 매치타입 수집, 마스킹, 상대 SR 첫 관측, gap, 연속 실패 3회), `build.py`(세션·선수 집계·검색 인덱스, 지표 v2, 결정적 산출물), `docs/index.html`(data/ fetch, 세션 파일·검색 인덱스 지연 로딩, 수집 시각은 GitHub Actions API), 워크플로 2개, 임포트된 39경기. 검증: (a) 시안 페이지와 새 페이지의 세션 목록·세션 요약·선수 집계(기본·패스) 표시값이 일치, (b) `tools/selftest.py`가 가짜 EA 응답으로 수집·중복 제거·마스킹·gap·403 연속 실패·빌드·무변경 멱등성을 통과, (c) **실제 운영 검증(2026-10-09 22:45 KST)**: github.com/greg82p/fc-ingyeo-tracker 에 push 후 pages → collect 수동 실행 성공. 첫 수집에서 새 경기 10건(10/8 밤 세션 9 + 10/9 1) 저장, 상대 게이머태그 마스킹·상대 SR 첫 관측·팀 경고/오프사이드 집계 모두 정상. gamesPlayed 71→84 대비 수집 10건이라 리그 3경기 영구 누락이 gaps.json에 기록됨(수집 시작 전에 발생한 누락). overallStats의 bestDivision이 null로 와서 리더보드 값으로 대체하는 수정 1건. 6단계(선수 추이 화면)는 미착수.
 
 **운영 이슈 #1 (2026-10-10 01:00 KST): GitHub `schedule` 이벤트가 한 번도 발화하지 않음.** 워크플로 `active`, 기본 브랜치, cron 유효, Actions 허용, 장애 없음 — 문서화된 제약은 모두 충족하는데 수동(`workflow_dispatch`)만 동작. 같은 계정의 `ea-probe`(6시간 간격, 24시간 경과)도 0건이라 계정 단위 현상. 2026년 7\~10월 GitHub 커뮤니티에 동일 증상 보고 다수(미해결). 대응: `tools/cf-dispatcher/` — Cloudflare Worker Cron Trigger(같은 UTC 슬롯 3줄)이 GitHub REST API로 `collect`에 `workflow_dispatch`를 보내는 우회로. fine-grained PAT(Actions RW, 이 저장소만)를 Worker secret에만 보관. GitHub `schedule:`은 관찰용으로 당분간 유지(겹치면 concurrency가 직렬화, 두 번째는 변경 없음). 임시 운영: 세션 종료 후(10경기 넘으면 중간에도) Actions 탭에서 수동 실행.
+
+**운영 이슈 #1 후속 (2026-10-14): `schedule:` 제거.** 10/11부터 발화는 시작됐지만 10/11\~10/13 기대 57회 중 8회(약 14%)만 실행됐고, 경기 시간대에 제때 돈 건 하루 1회 정도, 나머지는 경기가 끝난 새벽 5\~9시에 2\~6시간 늦게 실행됐다. GitHub 문서상 `schedule`은 부하 시 지연되거나 버려질 수 있는 best effort라([출처](https://docs.github.com/en/actions/writing-workflows/choosing-when-your-workflow-runs/events-that-trigger-workflows#schedule)) 수집 주기 보장 수단으로 쓸 수 없다고 판단. `collect.yml`을 `workflow_dispatch` 전용으로 바꾸고, 60일 비활성 자동 중단은 schedule에만 해당하므로 keepalive 단계도 뷐다. 당분간 수동 실행(세션 중 10판 넘으면 중간에도), 이후 Cloudflare Cron 등 외부 트리거로 `workflow_dispatch`를 호출한다. 페이지 상단 핀의 "24시간 이상 성공 없음" 경고는 수동 운영 중에는 경기 없는 날마다 켜진다.
 
 ## 14. 미결 사항
 

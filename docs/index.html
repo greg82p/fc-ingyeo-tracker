@@ -535,7 +535,7 @@ function renderHeader(){
   $('#title').innerHTML = (META.clubCrest && META.clubCrest.length ? crestImg(META.clubCrest, C.name) : '') + esc(C.name || 'FC INGYEO') + ' · 스탯 트래커';
   $('#meta').textContent = `clubId ${META.clubId} · 리그 · 플레이오프 · 친선`;
   const gapN = (META.gaps||[]).reduce((s,g)=>s+(g.missedLeagueMatches||0),0);
-  const tipBase = `GitHub Actions가 KST 21~03시에만 20분 간격으로 수집합니다(낮에는 수집하지 않음). 새 경기가 있을 때만 저장소가 바뀝니다. 지표 v${META.metricsVersion} · 데이터 ${META.dataHash}.` + (gapN?` 수집 누락 ${gapN}경기 기록됨.`:'');
+  const tipBase = `GitHub Actions 워크플로를 실행할 때 수집합니다(현재 수동 실행). 새 경기가 있을 때만 저장소가 바뀝니다. 지표 v${META.metricsVersion} · 데이터 ${META.dataHash}.` + (gapN?` 수집 누락 ${gapN}경기 기록됨.`:'');
   let body, cls = 'fresh';
   if(RUNS && RUNS.nRuns){
     const last = isoToTs(RUNS.lastSuccessAt), stale = !last || (Date.now()/1000 - last) > 86400;
@@ -1091,7 +1091,7 @@ function renderTrend(){
 
 /* ---------- notes ---------- */
 function buildNotes(){ return [
-  `<b>자동 수집.</b> GitHub Actions가 KST 21~03시에만 20분 간격으로 EA API를 조회해(낮에는 수집하지 않음, 필요 시 수동 실행) 새 경기를 저장소에 쌓고 이 페이지를 다시 만듭니다. EA API는 매치타입당 최근 10경기만 돌려주므로, 한 수집 간격 안에 10경기 넘게 치르면 그 사이 경기는 영구히 누락됩니다(상단 ⓘ에 누락 건수 표시). 수집 시작(${FIRST_SEEN()}) 이전 경기는 없습니다.`,
+  `<b>수집.</b> GitHub Actions 워크플로가 실행될 때마다 EA API를 조회해 새 경기를 저장소에 쌓고 이 페이지를 다시 만듭니다(현재는 수동 실행, 자동 스케줄 없음). EA API는 매치타입당 최근 10경기만 돌려주므로, 두 실행 사이에 10경기 넘게 치르면 그 사이 경기는 영구히 누락됩니다(상단 ⓘ에 누락 건수 표시). 수집 시작(${FIRST_SEEN()}) 이전 경기는 없습니다.`,
   '<b>리그·플레이오프·친선</b> 경기를 모두 수집해 세션과 누적에 그대로 포함합니다. 리그가 아닌 경기는 상대팀 이름 뒤에 <span class="tag mute">플레이오프</span> / <span class="tag mute">친선</span> 태그가 붙습니다. 상단 시즌 누적은 EA가 집계한 리그 값입니다.',
   '<b>세션</b> = 60분 안에 이어진 경기 묶음. 관측된 세션 내 최대 간격은 28분이었습니다. 세션 ID는 첫 경기 matchId라 뒤에 경기가 붙어도 바뀌지 않습니다. "진행 중"은 지금 시각 기준 마지막 경기가 1시간 이내인 세션이며, 1시간 동안 새 경기가 없으면 사라집니다.',
   '<b>초기 수집본(9/29~10/3, 20경기)</b>은 자동 수집 전에 수동으로 받은 스냅샷이라 이벤트 36종만 저장했습니다(현재 61종). 패스 실패의 방향·거리, 크로스, 빗나간 슈팅 위치, 태클 유형, 파울(event_3), 팀 경고·오프사이드가 없어 해당 항목은 "–" 또는 "n경기 제외"로 표시합니다. 90분당 값은 기록된 경기의 출전시간만으로 계산합니다.',

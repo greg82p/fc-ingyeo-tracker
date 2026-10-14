@@ -14,7 +14,7 @@ meta/                 state.json(시즌 누적·엠블럼·연속 실패 횟수�
                       club_history.json(우리 SR·디비전·승점 추이 — 값이 바뀐 실행에서만 한 줄 추가)
                       members.json(EA members/stats 선수별 시즌 누적 — 값이 바뀔 때만 파일이 바뀜)
 .github/workflows/    collect.yml(수집 → 빌드 → 커밋 → 배포), pages.yml(docs 를 직접 고쳤을 때 배포)
-tools/                legacy_import.py, selftest.py(가짜 API로 수집기 점검), cf-dispatcher/(스케줄 대체용 Cloudflare Worker)
+tools/                legacy_import.py, selftest.py(가짜 API로 수집기 점검), cf-dispatcher/(자동 실행용 Cloudflare Worker, 미배포)
 ```
 
 설계 배경과 결정 이력은 [DESIGN.md](DESIGN.md) 에 있습니다. 왜 이렇게 만들었는지 궁금할 때 먼저 봐 주세요.
@@ -33,8 +33,8 @@ tools/                legacy_import.py, selftest.py(가짜 API로 수집기 점�
 4. **첫 배포** — Actions 탭 → `pages` → Run workflow 를 누르면 1~2분 뒤 `https://<계정>.github.io/fc-ingyeo-tracker/` 가 열립니다.
    이때는 임포트한 39경기만 보이고, 상단에 "마지막 수집 기록 없음" 이 표시되는 것이 정상입니다.
 5. **첫 수집** — Actions 탭 → `collect` → Run workflow. 첫 실행은 시즌 누적을 EA 값으로 맞추느라 커밋이 한 번 생깁니다.
-   그 뒤로는 스케줄대로 KST 21:00~03:00 사이에 20분 간격(03:03 마감 1회 포함)으로 돌면서 **새 경기가 있을 때만** 커밋·배포합니다.
-   낮에는 돌지 않으니 그 시간대에 경기를 했다면 Actions 탭에서 직접 실행해 주세요.
+   지금은 자동 스케줄 없이 **수동 실행 전용**입니다. 경기 중이나 끝난 뒤 Actions 탭에서 Run workflow 를 눌러 주세요(아래 "자동 실행" 참고).
+   실행할 때마다 **새 경기가 있을 때만** 커밋·배포합니다.
    페이지 상단의 "마지막 수집" 시각은 저장소가 아니라 GitHub Actions 실행 기록(공개 API)에서 읽어 오기 때문에, 커밋이 없어도 갱신됩니다.
 
 ## 페이지 보는 법
@@ -55,10 +55,11 @@ tools/                legacy_import.py, selftest.py(가짜 API로 수집기 점�
 
 - **실패 알림**: 수집이 3회 연속 실패하면 워크플로가 실패로 끝나 GitHub 기본 알림(이메일)이 옵니다. 1~2회 실패는 로그만 남깁니다.
   페이지 상단의 상태 핀은 24시간 넘게 성공 기록이 없으면 빨간색으로 바뀝니다.
-- **스케줄이 돌지 않을 때**: GitHub 쪽 사정으로 `schedule` 이 전혀 실행되지 않는 경우가 있습니다(설정은 다 맞는데 실행 기록만 없는 상태).
-  그럴 때는 `tools/cf-dispatcher/` 의 Cloudflare Worker 를 올려 같은 시각에 `workflow_dispatch` 를 쏘게 할 수 있습니다.
+- **자동 실행**: GitHub `schedule` 은 제거했습니다. best effort 방식이라 10/11~10/13 사흘 동안 기대 57회 중 8회만 돌았고, 그마저 대부분 경기가 끝난 새벽에 2~6시간 늦게 실행됐습니다.
+  자동화가 필요하면 `tools/cf-dispatcher/` 의 Cloudflare Worker 를 올려 Cron Trigger 로 `workflow_dispatch` 를 호출하게 하면 됩니다.
   Actions 권한(Read and write)만 있는 fine-grained PAT 를 만들어 `npx wrangler secret put GITHUB_TOKEN` 으로 넣고 `npx wrangler deploy` 하면 됩니다.
-  토큰은 Worker 비밀값으로만 두고 저장소에는 절대 넣지 마세요. 두 스케줄이 겹쳐도 `concurrency` 설정 덕분에 한 번에 하나만 돕니다.
+  토큰은 Worker 비밀값으로만 두고 저장소에는 절대 넣지 마세요. 수동 실행과 겹쳐도 `concurrency` 설정 덕분에 한 번에 하나만 돕니다.
+- **수동 실행 요령**: 한 세션에서 리그 경기를 10판 넘게 할 것 같으면 중간에 한 번, 끝나고 한 번 실행해 주세요. API 가 최근 10경기만 주기 때문입니다.
 - **수집 누락**: EA API 는 매치타입별로 최근 10경기만 돌려줍니다. 두 번의 성공 사이에 10경기를 넘게 치르면 그 사이 경기는 영영 받을 수 없습니다.
   리그 경기에 한해 `gamesPlayed` 가 늘어난 만큼과 실제 받은 경기 수를 비교해 `meta/gaps.json` 에 기록해 두지만, 복구할 방법은 없습니다.
 - **지표 규칙을 바꿀 때**: `build.py` 만 고치고 로컬에서 `python build.py` 를 돌린 뒤 커밋해 주세요. 원본(`raw/`)은 건드리지 않습니다. `METRICS_VERSION` 을 하나 올려 두면 좋습니다.
@@ -67,8 +68,7 @@ tools/                legacy_import.py, selftest.py(가짜 API로 수집기 점�
   `file://` 로 열면 fetch 가 막혀서 데이터가 보이지 않습니다. "마지막 수집" 핀까지 보려면 `?repo=<계정>/fc-ingyeo-tracker` 를 붙이면 됩니다.
 - **변경이 없으면 커밋도 없습니다**: `collect.py` 와 `build.py` 는 실행 시각을 파일에 쓰지 않고, 산출물은 입력이 같으면 바이트까지 같게 만들어집니다.
   그래서 새 경기나 시즌 누적 변화, 실패 상태 변화가 없으면 `git diff` 가 비어 커밋도 배포도 생기지 않습니다. `tools/selftest.py` 가 이 성질을 검사합니다.
-- **스케줄 자동 중단 방지**: 공개 저장소는 60일간 커밋이 없으면 GitHub 이 스케줄을 꺼 버립니다.
-  마지막 커밋 뒤 50일이 지나면 워크플로가 `meta/keepalive.txt` 를 갱신해 커밋하므로 시즌 오프 중에도 꺼지지 않습니다. 그래도 꺼졌다면 Actions 탭에서 다시 켜 주세요.
+- **keepalive 제거**: 공개 저장소의 60일 비활성 자동 중단은 `schedule` 워크플로에만 해당해서, 스케줄을 없애면서 keepalive 단계도 뺐습니다.
 
 ## 데이터 파일 (docs/data/)
 
