@@ -16,5 +16,11 @@
   "missedLeagueMatches": 2,
   "gamesPlayedBefore": 107,
   "gamesPlayedAfter": 109
+ },
+ {
+  "detectedAt": "2026-10-15T14:39:42Z",
+  "missedLeagueMatches": 1,
+  "gamesPlayedBefore": 109,
+  "gamesPlayedAfter": 110
  }
 ]

@@ -751,5 +751,20 @@
   },
   "div": 8,
   "divAt": "2026-10-15T14:15:16Z"
+ },
+ "772241": {
+  "name": "Aoba Hospital",
+  "sr": 1403,
+  "gp": 31,
+  "seenAt": "2026-10-15T14:39:42Z",
+  "firstMatchId": "104182691630176",
+  "crest": {
+   "team": 10,
+   "teamId": 10,
+   "crestAssetId": 99161009,
+   "kitType": 0
+  },
+  "div": 8,
+  "divAt": "2026-10-15T14:39:44Z"
  }
 }
