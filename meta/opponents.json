@@ -721,5 +721,20 @@
   },
   "div": 3,
   "divAt": "2026-10-11T15:57:17Z"
+ },
+ "655095": {
+  "name": "RITSUYO SC",
+  "sr": 1432,
+  "gp": 38,
+  "seenAt": "2026-10-15T13:28:33Z",
+  "firstMatchId": "104126453370248",
+  "crest": {
+   "team": 99130506,
+   "teamId": 1318,
+   "crestAssetId": 99130506,
+   "kitType": 1
+  },
+  "div": 8,
+  "divAt": "2026-10-15T13:28:36Z"
  }
 }
