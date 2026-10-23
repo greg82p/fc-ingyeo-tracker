@@ -629,8 +629,8 @@
    "crestAssetId": 99160705,
    "kitType": 0
   },
-  "div": 6,
-  "divAt": "2026-10-11T14:20:44Z"
+  "div": 5,
+  "divAt": "2026-10-23T15:49:17Z"
  },
  "921077": {
   "name": "AGOGO Hiroshima",
@@ -811,5 +811,35 @@
   },
   "div": 6,
   "divAt": "2026-10-23T15:13:47Z"
+ },
+ "103567": {
+  "name": "FC Nullpo",
+  "sr": 1557,
+  "gp": 86,
+  "seenAt": "2026-10-23T15:49:07Z",
+  "firstMatchId": "130866232190053",
+  "crest": {
+   "team": 1318,
+   "teamId": 1318,
+   "crestAssetId": 99160502,
+   "kitType": 0
+  },
+  "div": 6,
+  "divAt": "2026-10-23T15:49:11Z"
+ },
+ "1738045": {
+  "name": "FC mita",
+  "sr": 1357,
+  "gp": 19,
+  "seenAt": "2026-10-23T15:49:12Z",
+  "firstMatchId": "130970033510171",
+  "crest": {
+   "team": 5,
+   "teamId": 5,
+   "crestAssetId": 99160714,
+   "kitType": 0
+  },
+  "div": 6,
+  "divAt": "2026-10-23T15:49:15Z"
  }
 }

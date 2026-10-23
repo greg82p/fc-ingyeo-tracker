@@ -2,22 +2,22 @@
  "consecutiveFailures": 0,
  "club": {
   "name": "FC INGYEO",
-  "div": 6,
+  "div": 5,
   "best": 6,
-  "gp": 113,
-  "w": 37,
+  "gp": 117,
+  "w": 40,
   "d": 21,
-  "l": 55,
-  "gf": 169,
-  "ga": 185,
-  "pts": 3,
-  "sr": 1514,
-  "cs": 1,
+  "l": 56,
+  "gf": 176,
+  "ga": 188,
+  "pts": 7,
+  "sr": 1547,
+  "cs": 5,
   "team": 2055,
-  "updatedAt": "2026-10-23T15:13:44Z",
+  "updatedAt": "2026-10-23T15:49:07Z",
   "gpPlayoff": 4,
-  "wstreak": 1,
-  "unbeaten": 1,
+  "wstreak": 0,
+  "unbeaten": 0,
   "crest": {
    "team": 2055,
    "teamId": 2055,
@@ -25,5 +25,5 @@
    "kitType": 0
   }
  },
- "rawCount": 38
+ "rawCount": 42
 }
