@@ -796,5 +796,20 @@
   },
   "div": 5,
   "divAt": "2026-10-23T14:55:59Z"
+ },
+ "1705374": {
+  "name": "KOSEN SRR",
+  "sr": 1348,
+  "gp": 14,
+  "seenAt": "2026-10-23T15:13:44Z",
+  "firstMatchId": "130496805670302",
+  "crest": {
+   "team": 9,
+   "teamId": 9,
+   "crestAssetId": 99160622,
+   "kitType": 0
+  },
+  "div": 6,
+  "divAt": "2026-10-23T15:13:47Z"
  }
 }
