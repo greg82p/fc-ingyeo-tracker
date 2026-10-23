@@ -766,5 +766,35 @@
   },
   "div": 8,
   "divAt": "2026-10-15T14:39:44Z"
+ },
+ "662696": {
+  "name": "KOUSAKING",
+  "sr": 1667,
+  "gp": 89,
+  "seenAt": "2026-10-23T14:55:50Z",
+  "firstMatchId": "130522597600410",
+  "crest": {
+   "team": 243,
+   "teamId": 243,
+   "crestAssetId": 99160521,
+   "kitType": 0
+  },
+  "div": 5,
+  "divAt": "2026-10-23T14:55:53Z"
+ },
+ "87813": {
+  "name": "ITTAN  AISHITE",
+  "sr": 1395,
+  "gp": 155,
+  "seenAt": "2026-10-23T14:55:54Z",
+  "firstMatchId": "130442514650284",
+  "crest": {
+   "team": 1352,
+   "teamId": 1352,
+   "crestAssetId": 99160704,
+   "kitType": 0
+  },
+  "div": 5,
+  "divAt": "2026-10-23T14:55:59Z"
  }
 }
