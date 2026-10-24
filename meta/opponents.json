@@ -629,8 +629,8 @@
    "crestAssetId": 99160705,
    "kitType": 0
   },
-  "div": 5,
-  "divAt": "2026-10-23T15:49:17Z"
+  "div": 6,
+  "divAt": "2026-10-24T18:28:48Z"
  },
  "921077": {
   "name": "AGOGO Hiroshima",
@@ -931,5 +931,80 @@
   },
   "div": 6,
   "divAt": "2026-10-24T14:40:36Z"
+ },
+ "125491": {
+  "name": "SEYA FC2",
+  "sr": 1230,
+  "gp": 46,
+  "seenAt": "2026-10-24T18:28:31Z",
+  "firstMatchId": "134152842400167",
+  "crest": {
+   "team": 1411,
+   "teamId": 1411,
+   "crestAssetId": 99160308,
+   "kitType": 0
+  },
+  "div": 6,
+  "divAt": "2026-10-24T18:28:34Z"
+ },
+ "819605": {
+  "name": "JPMilan",
+  "sr": 1430,
+  "gp": 11,
+  "seenAt": "2026-10-24T18:28:35Z",
+  "firstMatchId": "133992947220289",
+  "crest": {
+   "team": 131681,
+   "teamId": 131681,
+   "crestAssetId": 99161102,
+   "kitType": 0
+  },
+  "div": 6,
+  "divAt": "2026-10-24T18:28:38Z"
+ },
+ "4722": {
+  "name": "BACK NEW BORN",
+  "sr": 1553,
+  "gp": 190,
+  "seenAt": "2026-10-24T18:28:39Z",
+  "firstMatchId": "134164563220304",
+  "crest": {
+   "team": 70,
+   "teamId": 70,
+   "crestAssetId": 99160525,
+   "kitType": 0
+  },
+  "div": 4,
+  "divAt": "2026-10-24T18:28:42Z"
+ },
+ "910414": {
+  "name": "ROYALFIRE",
+  "sr": 1369,
+  "gp": 65,
+  "seenAt": "2026-10-24T18:28:43Z",
+  "firstMatchId": "134116501390233",
+  "crest": {
+   "team": 21,
+   "teamId": 21,
+   "crestAssetId": 99160522,
+   "kitType": 0
+  },
+  "div": 6,
+  "divAt": "2026-10-24T18:28:46Z"
+ },
+ "4748": {
+  "name": "FC KURAYA",
+  "sr": 1624,
+  "gp": 132,
+  "seenAt": "2026-10-24T18:28:49Z",
+  "firstMatchId": "134056496010169",
+  "crest": {
+   "team": 99160105,
+   "teamId": 21,
+   "crestAssetId": 99160105,
+   "kitType": 1
+  },
+  "div": 5,
+  "divAt": "2026-10-24T18:28:52Z"
  }
 }
