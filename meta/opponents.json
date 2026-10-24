@@ -901,5 +901,35 @@
   },
   "div": 5,
   "divAt": "2026-10-23T18:23:56Z"
+ },
+ "659900": {
+  "name": "FC Jonggame",
+  "sr": 1594,
+  "gp": 147,
+  "seenAt": "2026-10-24T14:40:29Z",
+  "firstMatchId": "133986498690045",
+  "crest": {
+   "team": 11,
+   "teamId": 11,
+   "crestAssetId": 99160926,
+   "kitType": 0
+  },
+  "div": 3,
+  "divAt": "2026-10-24T14:40:32Z"
+ },
+ "865252": {
+  "name": "SeiryuFC",
+  "sr": 1478,
+  "gp": 111,
+  "seenAt": "2026-10-24T14:40:33Z",
+  "firstMatchId": "134108186790206",
+  "crest": {
+   "team": 99161227,
+   "teamId": 245,
+   "crestAssetId": 99161227,
+   "kitType": 1
+  },
+  "div": 6,
+  "divAt": "2026-10-24T14:40:36Z"
  }
 }
