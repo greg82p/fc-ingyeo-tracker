@@ -1,5 +1,5 @@
 {
- "consecutiveFailures": 0,
+ "consecutiveFailures": 1,
  "club": {
   "name": "FC INGYEO",
   "div": 6,
@@ -25,5 +25,9 @@
    "kitType": 0
   }
  },
- "rawCount": 55
+ "rawCount": 55,
+ "lastError": {
+  "at": "2026-10-26T13:52:33Z",
+  "msg": "HTTP 403 clubs/matches"
+ }
 }
