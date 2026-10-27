@@ -92,6 +92,42 @@ def save_json(path: Path, data, compact: bool = False) -> None:
 
 
 # ---------- HTTP ----------
+DIAG_HEADERS = ("server", "content-type", "content-length", "x-cache", "x-akamai-request-id", "akamai-grn",
+                "x-reference-error", "retry-after", "date")
+_diag_seen: set[str] = set()     # 엔드포인트별 진단 로그는 실행당 1회
+
+
+def describe_http_error(e: urllib.error.HTTPError) -> str:
+    """403 원인 진단용 한 줄: 주요 응답 헤더 + 본문 앞부분(공백 정리, 300자).
+    Akamai 엣지 차단이면 보통 Server: AkamaiGHost, 본문에 "Access Denied" · "Reference #..." 가 보인다."""
+    hdrs = {k.lower(): v for k, v in (e.headers.items() if e.headers else [])}
+    picked = ", ".join(f"{k}={hdrs[k]}" for k in DIAG_HEADERS if k in hdrs)
+    try:
+        body = e.read()[:2000].decode("utf-8", "replace")
+    except Exception as ex:          # 본문을 못 읽어도 진단 때문에 수집이 죽으면 안 된다
+        body = f"<unreadable: {type(ex).__name__}>"
+    body = " ".join(body.split())[:300]
+    return f"headers[{picked or '-'}] body[{body or '-'}]"
+
+
+def public_ip() -> str:
+    """러너 공인 IP (Actions 에서만 호출). 실패하면 사유 문자열."""
+    try:
+        with urllib.request.urlopen("https://api.ipify.org", timeout=5) as r:
+            return r.read().decode().strip()
+    except Exception as ex:
+        return f"unknown ({type(ex).__name__})"
+
+
+def log_http_diag(endpoint: str, e: urllib.error.HTTPError) -> None:
+    if endpoint in _diag_seen:
+        return
+    _diag_seen.add(endpoint)
+    log(f"  diag HTTP {e.code} {endpoint}: {describe_http_error(e)}")
+    if os.environ.get("GITHUB_ACTIONS") == "true" and "ip" not in _diag_seen:
+        _diag_seen.add("ip")
+        log(f"  diag runner public IP: {public_ip()}")
+
 def get_json(endpoint: str, **params):
     """GET {BASE}/{endpoint}?... → JSON. 403/5xx/타임아웃은 재시도 후 ApiError."""
     params.setdefault("platform", PLATFORM)
@@ -108,6 +144,8 @@ def get_json(endpoint: str, **params):
                 raise ApiError(f"non-JSON body from {endpoint}: {body[:80]!r}")
         except urllib.error.HTTPError as e:
             last = f"HTTP {e.code} {endpoint}"
+            if e.code == 403:
+                log_http_diag(endpoint, e)
             if 400 <= e.code < 500 and e.code != 403 and e.code != 429:
                 raise ApiError(last)                 # 잘못된 요청은 재시도 의미 없음
         except (urllib.error.URLError, TimeoutError, OSError) as e:

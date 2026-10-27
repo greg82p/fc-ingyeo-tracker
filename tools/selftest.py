@@ -2,7 +2,7 @@
 """collect.py 를 가짜 EA 응답으로 돌려 보는 자체 점검 (네트워크 없음).
 
 임시 디렉터리에 raw/meta 를 만들고 ① 첫 실행 ② 같은 응답 재실행(중복 0) ③ gamesPlayed 가 새 경기보다 더 늘어난 실행(누락 기록)
-④ 403 연속 실패 를 확인한 뒤, 그 raw 로 build.py 를 돌려 정규화가 깨지지 않는지 본다.
+④ 403 연속 실패(+진단 로그 문자열) 를 확인한 뒤, 그 raw 로 build.py 를 돌려 정규화가 깨지지 않는지 본다.
 
 사용:  python tools/selftest.py
 """
@@ -161,6 +161,16 @@ def main() -> int:
         state = json.loads((tmp / "meta" / "state.json").read_text())
         assert state["consecutiveFailures"] == 3 and state["lastError"]["msg"].startswith("HTTP 403")
         print("④ failure handling OK: exit codes", codes)
+
+        # ④-b 403 진단 문자열: Akamai 헤더·본문 요약 (실제 HTTP 없이 HTTPError 를 직접 만든다)
+        import email.message, io, urllib.error
+        h = email.message.Message(); h["Server"] = "AkamaiGHost"; h["Content-Type"] = "text/html"; h["Set-Cookie"] = "x=1"
+        body = b"<HTML><HEAD><TITLE>Access Denied</TITLE></HEAD>\n<BODY>Reference&#32;&#35;18.abc</BODY></HTML>"
+        d = collect.describe_http_error(urllib.error.HTTPError("u", 403, "Forbidden", h, io.BytesIO(body)))
+        assert "server=AkamaiGHost" in d and "content-type=text/html" in d and "Set-Cookie" not in d and "set-cookie" not in d, d
+        assert "Access Denied" in d and "\n" not in d, d
+        assert collect.describe_http_error(urllib.error.HTTPError("u", 403, "Forbidden", None, None)) == "headers[-] body[-]"   # 헤더·본문 없어도 안전
+        print("④-b 403 diag OK:", d[:80])
 
         # ⑤ 그 raw 로 build
         fake_get.fail_403 = False
