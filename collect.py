@@ -31,7 +31,7 @@ PLATFORM = os.environ.get("PLATFORM", "common-gen5")
 BASE = "https://proclubs.ea.com/api/fc"
 MATCH_TYPES = ["leagueMatch", "playoffMatch"]   # 친선(friendlyMatch)은 플레이하지 않아 조회하지 않는다
 TIMEOUT = 20
-RETRIES = 2                      # 요청당 재시도 (총 3회)
+RETRIES = 2                      # 요청당 재시도 (총 3회). 403 은 재시도하지 않는다
 FAIL_LIMIT = 3                   # 연속 실패 n회면 종료코드 1 → GitHub 알림
 
 ROOT = Path(__file__).resolve().parent
@@ -129,7 +129,8 @@ def log_http_diag(endpoint: str, e: urllib.error.HTTPError) -> None:
         log(f"  diag runner public IP: {public_ip()}")
 
 def get_json(endpoint: str, **params):
-    """GET {BASE}/{endpoint}?... → JSON. 403/5xx/타임아웃은 재시도 후 ApiError."""
+    """GET {BASE}/{endpoint}?... → JSON. 429/5xx/타임아웃은 재시도 후 ApiError, 403 은 즉시 ApiError.
+    403 은 IP 차단이라 반복해도 같고 차단만 강해질 수 있다 (설계 §6.2)."""
     params.setdefault("platform", PLATFORM)
     url = f"{BASE}/{endpoint}?{urllib.parse.urlencode(params)}"
     last = None
@@ -146,7 +147,8 @@ def get_json(endpoint: str, **params):
             last = f"HTTP {e.code} {endpoint}"
             if e.code == 403:
                 log_http_diag(endpoint, e)
-            if 400 <= e.code < 500 and e.code != 403 and e.code != 429:
+                raise ApiError(last)                 # 차단은 재시도하지 않는다
+            if 400 <= e.code < 500 and e.code != 429:
                 raise ApiError(last)                 # 잘못된 요청은 재시도 의미 없음
         except (urllib.error.URLError, TimeoutError, OSError) as e:
             last = f"{type(e).__name__}: {e} ({endpoint})"

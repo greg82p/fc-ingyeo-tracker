@@ -2,7 +2,7 @@
 """collect.py 를 가짜 EA 응답으로 돌려 보는 자체 점검 (네트워크 없음).
 
 임시 디렉터리에 raw/meta 를 만들고 ① 첫 실행 ② 같은 응답 재실행(중복 0) ③ gamesPlayed 가 새 경기보다 더 늘어난 실행(누락 기록)
-④ 403 연속 실패(+진단 로그 문자열) 를 확인한 뒤, 그 raw 로 build.py 를 돌려 정규화가 깨지지 않는지 본다.
+④ 403 연속 실패(+진단 로그 문자열, 403 무재시도) 를 확인한 뒤, 그 raw 로 build.py 를 돌려 정규화가 깨지지 않는지 본다.
 
 사용:  python tools/selftest.py
 """
@@ -170,7 +170,19 @@ def main() -> int:
         assert "server=AkamaiGHost" in d and "content-type=text/html" in d and "Set-Cookie" not in d and "set-cookie" not in d, d
         assert "Access Denied" in d and "\n" not in d, d
         assert collect.describe_http_error(urllib.error.HTTPError("u", 403, "Forbidden", None, None)) == "headers[-] body[-]"   # 헤더·본문 없어도 안전
-        print("④-b 403 diag OK:", d[:80])
+        # 403 은 재시도 없이 1회 요청 후 바로 ApiError, 503 은 재시도 (진짜 get_json 을 새로 불러 urlopen 만 바꿔 끼운다)
+        real = load_module("collect_http_t", tmp / "collect.py")
+        real.time.sleep = lambda s: None
+        for code, expect in [(403, 1), (503, real.RETRIES + 1)]:
+            hits = []
+            def fake_urlopen(req, timeout=None, code=code):
+                hits.append(req.full_url); raise urllib.error.HTTPError(req.full_url, code, "x", h, io.BytesIO(body))
+            real.urllib.request.urlopen = fake_urlopen
+            try:
+                real.get_json("clubs/matches", clubIds=our); raise AssertionError("no ApiError")
+            except real.ApiError as ex:
+                assert str(ex) == f"HTTP {code} clubs/matches" and len(hits) == expect, (code, str(ex), len(hits))
+        print("④-b 403 diag OK (no retry on 403):", d[:80])
 
         # ⑤ 그 raw 로 build
         fake_get.fail_403 = False
