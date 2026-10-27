@@ -1006,5 +1006,110 @@
   },
   "div": 5,
   "divAt": "2026-10-24T18:28:52Z"
+ },
+ "1785050": {
+  "name": "Establish",
+  "sr": 1358,
+  "gp": 48,
+  "seenAt": "2026-10-27T13:25:53Z",
+  "firstMatchId": "140140776180131",
+  "crest": {
+   "team": 110724,
+   "teamId": 110724,
+   "crestAssetId": 99160829,
+   "kitType": 0
+  },
+  "div": 6,
+  "divAt": "2026-10-27T13:25:57Z"
+ },
+ "1168244": {
+  "name": "spring mushroom",
+  "sr": 1441,
+  "gp": 193,
+  "seenAt": "2026-10-27T13:25:58Z",
+  "firstMatchId": "140124679310020",
+  "crest": {
+   "team": 99160217,
+   "teamId": 73,
+   "crestAssetId": 99160217,
+   "kitType": 1
+  },
+  "div": 4,
+  "divAt": "2026-10-27T13:26:01Z"
+ },
+ "644950": {
+  "name": "FC detteyu",
+  "sr": 1450,
+  "gp": 164,
+  "seenAt": "2026-10-27T13:26:02Z",
+  "firstMatchId": "140234414780116",
+  "crest": {
+   "team": 99160913,
+   "teamId": 91,
+   "crestAssetId": 99160913,
+   "kitType": 1
+  },
+  "div": 4,
+  "divAt": "2026-10-27T13:26:05Z"
+ },
+ "348596": {
+  "name": "poipoi",
+  "sr": 1413,
+  "gp": 74,
+  "seenAt": "2026-10-27T13:26:06Z",
+  "firstMatchId": "140036542820284",
+  "crest": {
+   "team": 1,
+   "teamId": 1,
+   "crestAssetId": 99160112,
+   "kitType": 0
+  },
+  "div": 5,
+  "divAt": "2026-10-27T13:26:09Z"
+ },
+ "41112": {
+  "name": "Chicken Farm",
+  "sr": 1499,
+  "gp": 176,
+  "seenAt": "2026-10-27T13:26:10Z",
+  "firstMatchId": "140120486220168",
+  "crest": {
+   "team": 1343,
+   "teamId": 1343,
+   "crestAssetId": 99160908,
+   "kitType": 0
+  },
+  "div": 4,
+  "divAt": "2026-10-27T13:26:14Z"
+ },
+ "1503212": {
+  "name": "EGOIST2026",
+  "sr": 1374,
+  "gp": 162,
+  "seenAt": "2026-10-27T13:26:15Z",
+  "firstMatchId": "140082411550093",
+  "crest": {
+   "team": 99111026,
+   "teamId": 131681,
+   "crestAssetId": 99111026,
+   "kitType": 1
+  },
+  "div": 5,
+  "divAt": "2026-10-27T13:26:18Z"
+ },
+ "641602": {
+  "name": "YOKO F MINAMI",
+  "sr": 1115,
+  "gp": 78,
+  "seenAt": "2026-10-27T13:26:19Z",
+  "firstMatchId": "140208181040094",
+  "crest": {
+   "team": 1411,
+   "teamId": 1411,
+   "crestAssetId": 99160810,
+   "kitType": 0
+  },
+  "div": 6,
+  "divAt": "2026-10-27T13:26:22Z"
  }
 }
