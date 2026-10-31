@@ -1111,5 +1111,50 @@
   },
   "div": 6,
   "divAt": "2026-10-27T13:26:22Z"
+ },
+ "20193": {
+  "name": "coconew",
+  "sr": 1272,
+  "gp": 140,
+  "seenAt": "2026-10-31T14:07:35Z",
+  "firstMatchId": "155266114340155",
+  "crest": {
+   "team": 105035,
+   "teamId": 105035,
+   "crestAssetId": 99160205,
+   "kitType": 0
+  },
+  "div": 6,
+  "divAt": "2026-10-31T14:07:38Z"
+ },
+ "499339": {
+  "name": "Yatagarasu",
+  "sr": 1577,
+  "gp": 118,
+  "seenAt": "2026-10-31T14:07:39Z",
+  "firstMatchId": "155188132030464",
+  "crest": {
+   "team": 113147,
+   "teamId": 113147,
+   "crestAssetId": 99130106,
+   "kitType": 0
+  },
+  "div": 5,
+  "divAt": "2026-10-31T14:07:42Z"
+ },
+ "1270363": {
+  "name": "gaihanboshi",
+  "sr": 1357,
+  "gp": 55,
+  "seenAt": "2026-10-31T14:07:43Z",
+  "firstMatchId": "154930844270188",
+  "crest": {
+   "team": 73,
+   "teamId": 73,
+   "crestAssetId": 99160928,
+   "kitType": 0
+  },
+  "div": 5,
+  "divAt": "2026-10-31T14:07:47Z"
  }
 }
