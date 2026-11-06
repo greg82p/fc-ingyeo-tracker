@@ -644,8 +644,8 @@
    "crestAssetId": 99160218,
    "kitType": 1
   },
-  "div": 4,
-  "divAt": "2026-10-11T14:20:47Z"
+  "div": 5,
+  "divAt": "2026-11-06T16:33:12Z"
  },
  "353082": {
   "name": "Joga Bonito 13",
@@ -1201,5 +1201,110 @@
   },
   "div": 6,
   "divAt": "2026-10-31T15:36:24Z"
+ },
+ "804572": {
+  "name": "FC Blau Fuego",
+  "sr": 1604,
+  "gp": 168,
+  "seenAt": "2026-11-06T16:33:02Z",
+  "firstMatchId": "168762498800297",
+  "crest": {
+   "team": 241,
+   "teamId": 241,
+   "crestAssetId": 99160911,
+   "kitType": 0
+  },
+  "div": 4,
+  "divAt": "2026-11-06T16:33:05Z"
+ },
+ "1003366": {
+  "name": "BURST STREAM",
+  "sr": 1366,
+  "gp": 98,
+  "seenAt": "2026-11-06T16:33:06Z",
+  "firstMatchId": "168798339200450",
+  "crest": {
+   "team": 5,
+   "teamId": 5,
+   "crestAssetId": 99160813,
+   "kitType": 0
+  },
+  "div": 6,
+  "divAt": "2026-11-06T16:33:10Z"
+ },
+ "63421": {
+  "name": "Sol Lira Zephyr",
+  "sr": 1500,
+  "gp": 227,
+  "seenAt": "2026-11-06T16:33:13Z",
+  "firstMatchId": "168806169350002",
+  "crest": {
+   "team": 219,
+   "teamId": 219,
+   "crestAssetId": 99160223,
+   "kitType": 0
+  },
+  "div": 4,
+  "divAt": "2026-11-06T16:33:17Z"
+ },
+ "778101": {
+  "name": "Hittobee",
+  "sr": 1234,
+  "gp": 45,
+  "seenAt": "2026-11-06T16:33:18Z",
+  "firstMatchId": "168762261210267",
+  "crest": {
+   "team": 18,
+   "teamId": 18,
+   "crestAssetId": 99160423,
+   "kitType": 0
+  },
+  "div": 6,
+  "divAt": "2026-11-06T16:33:22Z"
+ },
+ "657271": {
+  "name": "JogaBonitos FC",
+  "sr": 1558,
+  "gp": 210,
+  "seenAt": "2026-11-06T16:33:23Z",
+  "firstMatchId": "168792112970436",
+  "crest": {
+   "team": 99160103,
+   "teamId": 9,
+   "crestAssetId": 99160103,
+   "kitType": 1
+  },
+  "div": 4,
+  "divAt": "2026-11-06T16:33:26Z"
+ },
+ "369062": {
+  "name": "TSUBAKI",
+  "sr": 1293,
+  "gp": 89,
+  "seenAt": "2026-11-06T16:33:27Z",
+  "firstMatchId": "168668276460134",
+  "crest": {
+   "team": 9,
+   "teamId": 9,
+   "crestAssetId": 99160323,
+   "kitType": 0
+  },
+  "div": 6,
+  "divAt": "2026-11-06T16:33:31Z"
+ },
+ "891164": {
+  "name": "Amalyze",
+  "sr": 1422,
+  "gp": 46,
+  "seenAt": "2026-11-06T16:33:32Z",
+  "firstMatchId": "168742086240270",
+  "crest": {
+   "team": 9,
+   "teamId": 9,
+   "crestAssetId": 99160818,
+   "kitType": 0
+  },
+  "div": 5,
+  "divAt": "2026-11-06T16:33:35Z"
  }
 }
