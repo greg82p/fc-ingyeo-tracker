@@ -4,17 +4,17 @@
   "name": "FC INGYEO",
   "div": 5,
   "best": 6,
-  "gp": 152,
-  "w": 54,
-  "d": 26,
-  "l": 72,
-  "gf": 239,
-  "ga": 255,
-  "pts": 39,
-  "sr": 1481,
-  "cs": 15,
+  "gp": 159,
+  "w": 56,
+  "d": 27,
+  "l": 76,
+  "gf": 249,
+  "ga": 271,
+  "pts": 42,
+  "sr": 1426,
+  "cs": 17,
   "team": 2055,
-  "updatedAt": "2026-11-06T16:33:02Z",
+  "updatedAt": "2026-11-15T13:53:35Z",
   "gpPlayoff": 4,
   "wstreak": 0,
   "unbeaten": 0,
@@ -25,5 +25,5 @@
    "kitType": 0
   }
  },
- "rawCount": 77
+ "rawCount": 84
 }

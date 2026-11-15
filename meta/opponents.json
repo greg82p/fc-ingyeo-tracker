@@ -1139,8 +1139,8 @@
    "crestAssetId": 99130106,
    "kitType": 0
   },
-  "div": 5,
-  "divAt": "2026-10-31T14:07:42Z"
+  "div": 4,
+  "divAt": "2026-11-15T13:53:37Z"
  },
  "1270363": {
   "name": "gaihanboshi",
@@ -1306,5 +1306,80 @@
   },
   "div": 5,
   "divAt": "2026-11-06T16:33:35Z"
+ },
+ "659306": {
+  "name": "WISE WOLF",
+  "sr": 1371,
+  "gp": 81,
+  "seenAt": "2026-11-15T13:53:38Z",
+  "firstMatchId": "193760237040103",
+  "crest": {
+   "team": 114815,
+   "teamId": 114815,
+   "crestAssetId": 99160225,
+   "kitType": 0
+  },
+  "div": 5,
+  "divAt": "2026-11-15T13:53:41Z"
+ },
+ "366817": {
+  "name": "HEYON FC",
+  "sr": 1363,
+  "gp": 328,
+  "seenAt": "2026-11-15T13:53:42Z",
+  "firstMatchId": "193514971800350",
+  "crest": {
+   "team": 99160325,
+   "teamId": 1411,
+   "crestAssetId": 99160325,
+   "kitType": 1
+  },
+  "div": 5,
+  "divAt": "2026-11-15T13:53:45Z"
+ },
+ "1872498": {
+  "name": "FC YMN Madrid",
+  "sr": 1472,
+  "gp": 179,
+  "seenAt": "2026-11-15T13:53:46Z",
+  "firstMatchId": "193722227740011",
+  "crest": {
+   "team": 10,
+   "teamId": 10,
+   "crestAssetId": 99160811,
+   "kitType": 0
+  },
+  "div": 3,
+  "divAt": "2026-11-15T13:53:50Z"
+ },
+ "342190": {
+  "name": "Gyoza FC",
+  "sr": 1627,
+  "gp": 135,
+  "seenAt": "2026-11-15T13:53:51Z",
+  "firstMatchId": "193518693760110",
+  "crest": {
+   "team": 7,
+   "teamId": 7,
+   "crestAssetId": 99160916,
+   "kitType": 0
+  },
+  "div": 4,
+  "divAt": "2026-11-15T13:53:54Z"
+ },
+ "1250464": {
+  "name": "OjiatsuZoukinFC",
+  "sr": 1577,
+  "gp": 292,
+  "seenAt": "2026-11-15T13:53:55Z",
+  "firstMatchId": "193468736190490",
+  "crest": {
+   "team": 1362,
+   "teamId": 1362,
+   "crestAssetId": 99160803,
+   "kitType": 0
+  },
+  "div": 3,
+  "divAt": "2026-11-15T13:53:58Z"
  }
 }
