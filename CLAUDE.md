@@ -8,6 +8,7 @@ EA FC 27 프로클럽 **FC INGYEO**(clubId 829628, platform common-gen5) 경기 
 - **변경이 없으면 커밋도 없다.** `collect.py`·`build.py`는 실행 시각을 파일에 쓰지 않고, 입력이 같으면 산출물이 바이트까지 같아야 합니다. 새 필드를 추가할 때 이 성질을 깨지 않도록 하고, `tools/selftest.py`의 무변경 재실행 검사를 함께 늘려 주세요.
 - **원본(`raw/`)은 고치지 않습니다.** 지표 정의를 바꿀 때는 `build.py`만 고치고 `METRICS_VERSION`을 올립니다.
 - **수집은 Actions에서만 돌립니다.** 로컬에서 `collect.py`를 실행하면 `raw/`·`meta/`가 바뀌어 Actions의 수집 커밋과 충돌합니다. 로컬에서는 `python build.py`, `python tools/selftest.py`, 미리보기(`cd docs && python -m http.server 8000`, `?repo=greg82p/fc-ingyeo-tracker`)만 씁니다.
+  - 예외(2026-10-27~): GitHub 러너 IP가 Akamai에 차단되어(`server=AkamaiGHost`, Access Denied) 당분간 로컬에서 `tools/local_collect.sh`로 수집합니다. 깨끗한 작업 트리에서 pull → collect → build → `git add -A` → 커밋 → push를 한 번에 합니다. 수집이 실패하면 `meta/state.json`을 되돌리고 커밋하지 않습니다.
 - 수집 커밋(`collect ...`, collector-bot)은 `raw/`, `meta/`, `docs/data/`만 건드립니다. push가 거부되면 `git pull --rebase` 후 다시 push하면 됩니다.
 - 표준 라이브러리만 씁니다(`pip install` 없음). 페이지는 `docs/index.html` 한 파일이며 `docs/data/`만 읽습니다.
 - **`DESIGN.md`가 설계 문서의 원본입니다.** 2026-10-14까지는 Claude Docs 문서를 내보내 덮어썼지만 이제는 이 파일을 직접 고칩니다. 결정이 바뀌면 해당 절에 날짜와 함께 추가해 주세요.
