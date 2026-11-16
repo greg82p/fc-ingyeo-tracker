@@ -1381,5 +1381,65 @@
   },
   "div": 3,
   "divAt": "2026-11-15T13:53:58Z"
+ },
+ "999237": {
+  "name": "cheonriFC",
+  "sr": 1398,
+  "gp": 127,
+  "seenAt": "2026-11-16T12:53:16Z",
+  "firstMatchId": "193618940570415",
+  "crest": {
+   "team": 99160125,
+   "teamId": 1,
+   "crestAssetId": 99160125,
+   "kitType": 1
+  },
+  "div": 6,
+  "divAt": "2026-11-16T12:53:20Z"
+ },
+ "71873": {
+  "name": "FCmiyatsudai",
+  "sr": 1696,
+  "gp": 259,
+  "seenAt": "2026-11-16T12:53:21Z",
+  "firstMatchId": "193774419810450",
+  "crest": {
+   "team": 9,
+   "teamId": 9,
+   "crestAssetId": 99160705,
+   "kitType": 0
+  },
+  "div": 3,
+  "divAt": "2026-11-16T12:53:25Z"
+ },
+ "5581": {
+  "name": "AnzFC",
+  "sr": 1579,
+  "gp": 208,
+  "seenAt": "2026-11-16T12:53:26Z",
+  "firstMatchId": "193974003820179",
+  "crest": {
+   "team": 1824,
+   "teamId": 1824,
+   "crestAssetId": 99161118,
+   "kitType": 0
+  },
+  "div": 4,
+  "divAt": "2026-11-16T12:53:29Z"
+ },
+ "1666482": {
+  "name": "JUP FUT",
+  "sr": 1496,
+  "gp": 168,
+  "seenAt": "2026-11-16T12:53:30Z",
+  "firstMatchId": "193864110860217",
+  "crest": {
+   "team": 689,
+   "teamId": 689,
+   "crestAssetId": 99160807,
+   "kitType": 0
+  },
+  "div": 4,
+  "divAt": "2026-11-16T12:53:33Z"
  }
 }
