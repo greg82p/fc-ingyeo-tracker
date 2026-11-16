@@ -1441,5 +1441,80 @@
   },
   "div": 4,
   "divAt": "2026-11-16T12:53:33Z"
+ },
+ "1162310": {
+  "name": "nakamachi23",
+  "sr": 1340,
+  "gp": 101,
+  "seenAt": "2026-11-16T14:51:15Z",
+  "firstMatchId": "196282257180179",
+  "crest": {
+   "team": 9,
+   "teamId": 9,
+   "crestAssetId": 99160903,
+   "kitType": 0
+  },
+  "div": 6,
+  "divAt": "2026-11-16T14:51:19Z"
+ },
+ "537490": {
+  "name": "FCEPMAKITZ",
+  "sr": 1196,
+  "gp": 173,
+  "seenAt": "2026-11-16T14:51:20Z",
+  "firstMatchId": "196116513150056",
+  "crest": {
+   "team": 1808,
+   "teamId": 1808,
+   "crestAssetId": 99161101,
+   "kitType": 0
+  },
+  "div": 6,
+  "divAt": "2026-11-16T14:51:23Z"
+ },
+ "591192": {
+  "name": "Iron Flag FC",
+  "sr": 1660,
+  "gp": 336,
+  "seenAt": "2026-11-16T14:51:24Z",
+  "firstMatchId": "196322052630189",
+  "crest": {
+   "team": 99060307,
+   "teamId": 5,
+   "crestAssetId": 99060307,
+   "kitType": 1
+  },
+  "div": 3,
+  "divAt": "2026-11-16T14:51:27Z"
+ },
+ "668362": {
+  "name": "Tianjiabing",
+  "sr": 1415,
+  "gp": 35,
+  "seenAt": "2026-11-16T14:51:28Z",
+  "firstMatchId": "196136345870151",
+  "crest": {
+   "team": 243,
+   "teamId": 243,
+   "crestAssetId": 99160519,
+   "kitType": 0
+  },
+  "div": 6,
+  "divAt": "2026-11-16T14:51:32Z"
+ },
+ "661401": {
+  "name": "DARK ARTS JP",
+  "sr": 1411,
+  "gp": 306,
+  "seenAt": "2026-11-16T14:51:33Z",
+  "firstMatchId": "196064355000460",
+  "crest": {
+   "team": 1,
+   "teamId": 1,
+   "crestAssetId": 99160727,
+   "kitType": 0
+  },
+  "div": 4,
+  "divAt": "2026-11-16T14:51:36Z"
  }
 }
