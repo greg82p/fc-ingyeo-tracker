@@ -494,8 +494,8 @@
    "crestAssetId": 99160415,
    "kitType": 1
   },
-  "div": 6,
-  "divAt": "2026-10-11T15:57:26Z"
+  "div": 3,
+  "divAt": "2026-11-21T14:40:15Z"
  },
  "646379": {
   "name": "Tairyõ Matsuri",
@@ -1516,5 +1516,50 @@
   },
   "div": 4,
   "divAt": "2026-11-16T14:51:36Z"
+ },
+ "1513361": {
+  "name": "FC LVUP2",
+  "sr": 1479,
+  "gp": 84,
+  "seenAt": "2026-11-21T14:40:16Z",
+  "firstMatchId": "206590023550303",
+  "crest": {
+   "team": 9,
+   "teamId": 9,
+   "crestAssetId": 99160818,
+   "kitType": 0
+  },
+  "div": 4,
+  "divAt": "2026-11-21T14:40:20Z"
+ },
+ "109755": {
+  "name": "NO GOOD",
+  "sr": 1654,
+  "gp": 509,
+  "seenAt": "2026-11-21T14:40:21Z",
+  "firstMatchId": "206598012770031",
+  "crest": {
+   "team": 73,
+   "teamId": 73,
+   "crestAssetId": 99160207,
+   "kitType": 0
+  },
+  "div": 4,
+  "divAt": "2026-11-21T14:40:25Z"
+ },
+ "2214365": {
+  "name": "zzzwww",
+  "sr": 1414,
+  "gp": 15,
+  "seenAt": "2026-11-21T14:40:26Z",
+  "firstMatchId": "206146854170403",
+  "crest": {
+   "team": 2,
+   "teamId": 2,
+   "crestAssetId": 99160926,
+   "kitType": 0
+  },
+  "div": 5,
+  "divAt": "2026-11-21T14:40:29Z"
  }
 }
